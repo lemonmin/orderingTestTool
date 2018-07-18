@@ -3,6 +3,8 @@ import socket
 import traceback
 import os
 import datetime
+import time
+from threading import Thread
 from common.Constants import *
 from scp import SCPClient
 from model.TvModel import *
@@ -26,20 +28,66 @@ class TvController:
                 self.tvTransport.auth_none('root')
             except paramiko.BadAuthenticationType as err:
                 print(err.allowed_types)
+                #self.connect(ip)
                 return False
         except Exception as e:
-            print('*** Caught exception: %s: %s' % (e.__class__, e))
+            print('*** connect, Caught exception: %s: %s' % (e.__class__, e))
             traceback.print_exc()
             return False
         print('finish to connect : success')
         return True
 
+    def checkThread(self, session, command):
+        checkTime = 0
+        while True:
+            if self.check and self.check == True:
+                print(" self.check is True!!!")
+                self.check = False
+                break
+            if checkTime >= 50:
+                print("checkTime over 50!!!")
+                session.close()
+                self.execCommand(command)
+                break
+            time.sleep(0.5)
+            checkTime += 1
+
     def execCommand(self, command):
         tvModel = TvModel()
-        print(command)
+        self.check = False
         try:
             session = self.tvTransport.open_session()
             session.exec_command(command + '\n')
+            checkThread = Thread(target=self.checkThread, args=(session, command))
+            checkThread.start()
+            session.recv_exit_status()
+            self.check = True
+            while session.recv_ready():
+                byteText = session.recv(8000)
+            if byteText:
+                message = byteText.decode(encoding='UTF-8')
+                if '\"returnValue\":true' in message.replace(" ", ""):
+                    tvModel.resultType = RESULT_SUCCESS
+                    tvModel.resultValue = message
+                else:
+                    tvModel.resultType = RESULT_FAIL
+                    tvModel.message = MESSAGE_ERROR + command + '\n' + message
+
+        except Exception as e:
+            print('*** execCommand, Caught exception: %s: %s' % (e.__class__, e))
+            traceback.print_exc()
+            tvModel.message = MESSAGE_ERROR + str(e)
+            tvModel.resultType = RESULT_FAIL
+
+        return tvModel
+
+    def execCommandForWO35(self, command):
+        tvModel = TvModel()
+        try:
+            session = self.tvTransport.open_session()
+            session.exec_command(command + '\n')
+            if 'reboot' in command:
+                return tvModel
             session.recv_exit_status()
             while session.recv_ready():
                 byteText = session.recv(8000)
@@ -50,10 +98,9 @@ class TvController:
             else:
                 tvModel.resultType = RESULT_FAIL
                 tvModel.message = MESSAGE_ERROR + command + '\n' + message
-                print(tvModel.message)
 
         except Exception as e:
-            print('*** Caught exception: %s: %s' % (e.__class__, e))
+            print('*** execCommandForWO35, Caught exception: %s: %s' % (e.__class__, e))
             traceback.print_exc()
             tvModel.message = MESSAGE_ERROR + str(e)
             tvModel.resultType = RESULT_FAIL
@@ -92,7 +139,7 @@ class TvController:
                     tvModel.message = MESSAGE_SCP_ERROR
 
         except Exception as e:
-            print('*** Caught exception: %s: %s' % (e.__class__, e))
+            print('*** downloadFile, Caught exception: %s: %s' % (e.__class__, e))
             traceback.print_exc()
             tvModel.message = MESSAGE_ERROR + str(e)
         finally:

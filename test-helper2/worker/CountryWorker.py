@@ -95,6 +95,35 @@ class CountryWorker:
 
         return result
 
+    def __loadServiceCountries(self, languageCountry):
+        countryGroup = languageCountryDic[languageCountry]
+        if countryGroup in ('langSelNordic', 'langSelNonNordic'):
+            countryGroup = 'EU'
+        else:
+            countryGroupLen = len(countryGroup)
+            countryGroup = countryGroup[countryGroupLen-2:countryGroupLen]
+        print('__loadServiceCountryFile : ' + countryGroup)
+        fileName = PLATFROMS_FILE[self.countryModel.platform]
+        schemaFile = os.path.join('.', 'resources', fileName)
+        tree = ElementTree.parse(schemaFile)
+        root = tree.getroot()
+        self.countryModel.countryList = {}
+        self.countryModel.countryNameList = []
+        countryList = self.countryModel.countryList
+        countryNameList = self.countryModel.countryNameList
+
+        for group in root.getchildren():
+            code = group.get(KEY_CODE)
+            if code == countryGroup:
+                for country in group.getchildren():
+                    fullName = country.get(KEY_FULL_NAME)
+                    code2 = country.get(KEY_CODE2)
+                    code3 = country.get(KEY_CODE3)
+                    countryName =  self.__makeCountryName(fullName, code2, code3, code)
+                    countryList[countryName] = {KEY_CODE2:code2, KEY_CODE3:code3, KEY_FULL_NAME:fullName, KEY_CODE:code}
+                    countryNameList.append(countryName)
+        self.countryModel.countryNameList.sort()
+
 
     def __loadCurrentAreaOption(self, currentAreaOption):
         print('__loadCurrentAreaOption')
@@ -133,14 +162,14 @@ class CountryWorker:
                     countryNameList.append(countryName)
         self.countryModel.countryNameList.sort()
 
-    def __makeCountryName(self, fullName, code2, code3):
+    def __makeCountryName(self, fullName, code2, code3, code=''):
         displayType = self.countryModel.displayType
         if displayType == DISPLAY_TYPE_CODE2:
             return code2 + ' (' + fullName + ', ' + code3 +')'
         elif displayType == DISPLAY_TYPE_CODE3:
             return code3 + ' (' + fullName + ', ' + code2 +')'
         else:
-            return fullName + ' (' + code2 + ', ' + code3 +')'
+            return fullName + ' (' + code2 + ', ' + code3 + ', ' + code +')' if code != '' else fullName + ' (' + code2 + ', ' + code3 +')'
 
     def __loadServiceCountryFile(self):
         print('__loadServiceCountryFileForAll')
@@ -159,7 +188,7 @@ class CountryWorker:
                 fullName = country.get(KEY_FULL_NAME)
                 code2 = country.get(KEY_CODE2)
                 code3 = country.get(KEY_CODE3)
-                countryName =  self.__makeCountryName(fullName, code2, code3)
+                countryName =  self.__makeCountryName(fullName, code2, code3, code)
                 if not countryName in countryNameList:
                     countryList[countryName] = {KEY_CODE2:code2, KEY_CODE3:code3, KEY_FULL_NAME:fullName, KEY_CODE:code}
                     countryNameList.append(countryName)
@@ -239,3 +268,29 @@ class CountryWorker:
             result.message = MESSAGE_TV_ABNORMAL
 
         return result
+
+    def checkIncludeCountryName(self, countryName, list):
+        for item in list:
+            if countryName in item:
+                return True
+
+        return False
+
+    def devDVBorATSC(self):
+        for country in self.countryModel.countryList.keys():
+            code = self.countryModel.countryList[country]["code"]
+            # 마지막 code이름만 제외한 Name
+            countryName = ''.join(list(country)[:-4])
+
+            if code == 'EU' or code == 'AJ' or code == 'JA' \
+                or code == 'CS' or code == 'TW' or code == 'CO' \
+                or code == 'CN' or code == 'HK' or code == 'IL' \
+                or code == 'PA' or code == 'IR':
+                if not self.checkIncludeCountryName(countryName, self.countryModel.DVBcountryList):
+                    self.countryModel.DVBcountryList.append(country)
+            elif code == 'JP':
+                if not self.checkIncludeCountryName(countryName, self.countryModel.ARIBcountryList):
+                    self.countryModel.ARIBcountryList.append(country)
+            else:
+                if not self.checkIncludeCountryName(countryName, self.countryModel.ATSCcountryList):
+                    self.countryModel.ATSCcountryList.append(country)

@@ -12,6 +12,22 @@ SURFACE_MANAGER = 'luna://com.webos.surfacemanager'
 def reboot(self):
     return 'luna-send -n 1 -f ' + POWER_SERVICE + '/power/reboot \'{ "reason" : "reset" }\''
 
+def keyBlock(self, block=True):
+    if block:
+        return 'luna-send -n 1 luna://com.lge.settingsservice/setSystemSettings \'{"category":"hotelMode", "settings":{"enableHotelMode": "on", "keyManagement" : "on", "enableIrRemote" : "blockAll" , "enableLocalKey" : "blockAll" }}\''
+    else:
+        return 'luna-send -n 1 luna://com.lge.settingsservice/setSystemSettings \'{"category":"hotelMode", "settings":{"enableHotelMode": "off", "keyManagement" : "off", "enableIrRemote" : "normal" , "enableLocalKey" : "normal" }}\''
+
+# 약관동의 해제
+def setEULA(self, state=False):
+    if state:
+        state = "true"
+    else:
+        state = "false"
+    return 'luna-send -n 1 -f luna://com.lge.settingsservice/setSystemSettings \'{"settings":{"eulaStatus": {"acrAllowed": '+ state +',"additionalDataAllowed": '+ state +','+\
+           '"cookiesAllowed": '+ state +',"customAdAllowed": '+ state +',"customadsAllowed": '+ state +',"generalTermsAllowed": '+ state +',"networkAllowed": '+ state +',"remoteDiagAllowed": '+ state +','+\
+           '"voiceAllowed": '+ state +' }}}\''
+
 # Input Key
 def inputKey(self, key):
     return 'luna-send -n 1 -f ' + NETWORK_INPUT + '/sendSpecialKey \'{ "key" : ' + key + ' }\''
@@ -30,7 +46,7 @@ def doScreenCapture(self, fileName):
     #luna-send -n 1 luna://com.webos.service.tv.capture/executeOneShot '{"path":"/tmp/kids_eye.jpg", "method":"DISPLAY", "width":1920, "height":1080, "format":"JPEG"}'
     #luna-send -n 1 luna://com.webos.service.tv.capture/executeOneShot '{"path":"/tmp/ivi_TV_First_Screen.jpg", "method":"DISPLAY", "width":1280, "height":720, "format":"JPEG"}'
     # if resolution == 1280:
-    return 'luna-send -n 1 -f ' + CAPTURE_SERVICE + '/executeOneShot \'{"path":"' + fileName + '", "method":"DISPLAY", "width":1280, "height":720, "format":"JPEG"}\''
+    return 'luna-send -n 1 -f ' + CAPTURE_SERVICE + '/executeOneShot \'{"path":"' + fileName + '", "method":"DISPLAY", "width":1920, "height":1080, "format":"PNG"}\''
     # else:
     #     return 'luna-send -n 1 luna://com.webos.service.tv.capture/executeOneShot \'{"path":"/tmp/' + filename + '", "method":"DISPLAY", "width":1920, "height":1080, "format":"JPEG"}\''
 

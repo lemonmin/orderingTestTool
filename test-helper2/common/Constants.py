@@ -23,7 +23,6 @@ MESSAGE_GUIDE = 'Test Helper 도움말\n\n' \
 '   2) ‘root@LGwebOSTV : ~#’ 에서 wget xownsla1.dothome.co.kr/scp.sh 입력 \n' \
 '   3) ‘root@LGwebOSTV : ~#’ 에서 sh scp.sh 입력\n' \
 '   4) Password 요구 시 무시하고 Enter 키 3번 입력\n\n' \
-'* 추가문의 사항은 Test Helper 담당자 박창미(changmi.park@lge.com)에게 연락 주세요.\n' \
 
 MESSAGE_TV_ABNORMAL = 'TV 연결을 실패하였습니다. TV IP 또는 TV가 켜져 있는지 확인해주세요. \n만약 양산모드라면, WTA와 SCP를 설치해야합니다.' \
     + '\n* SSH 기능 활성화를 위해 TV 에 WTA 설치 방법 * \n' \
@@ -46,7 +45,7 @@ MESSAGE_ERROR_PWD = 'Tool Password 를 잘 못 입력하였습니다.'
 MESSAGE_SUCCESS_PWD = 'Tool Password 확인을 완료하였습니다.'
 
 MESSAGE_SCP_ERROR = '파일 다운로드 실패하였습니다. TV에서 SCP 명령어가 실행되는지 확인해주세요.'
-MESSAGE_ERROR = '실패하였습니다. 툴관리자에게 문의 바랍니다. (툴관리자 : changmi.park@lge.com) \n'
+MESSAGE_ERROR = '실패하였습니다.\n'
 
 MESSAGE_NO_INPUT_INQUERY_COUNTRY = 'IP 를 입력하세요.'
 MESSAGE_NO_INPUT_CHANGE_GROUP = 'IP, ContinentIndex, Language&Country, HWSettings 를 입력하세요.'
@@ -66,6 +65,9 @@ MESSAGE_SUCCESS_DOWNLOAD = '로그 추출을 완료하였습니다.'
 MESSAGE_SUCCESS_APPINFO = 'appinfo.json 추출을 완료하였습니다.'
 MESSAGE_SUCCESS_ATTACH = 'JIRA Issue에 파일 첨부를 완료하였습니다.'
 
+MESSAGE_NO_INPUT_EXCEL_PATH = 'Ordering excel file의 경로가 제대로 선택되었는지 확인해 주세요.'
+MESSAGE_NO_INPUT_RESOURCE_PATH = '실물과의 비교를 위한 Ordering resource 원본 파일들의 경로가 제대로 선택되었는지 확인해 주세요.'
+
 RESULT_SUCCESS = True
 RESULT_FAIL = False
 
@@ -80,6 +82,10 @@ COUNTRY_CODES_FILE_WEBOS35 = '../resources/country_codes_v5_webOS35.xml'
 
 PLATFROMS = [PLATFROM_WEBOS35, PLATFROM_WEBOS3]
 PLATFROMS_FILE = {PLATFROM_WEBOS3:COUNTRY_CODES_FILE_WEBOS3, PLATFROM_WEBOS35:COUNTRY_CODES_FILE_WEBOS35}
+ORDERING_FILTER = ("None","OK","NG")
+RESULT_VALUES = ("NG","OK")
+DIV_CHIP_VALUES = ("DVB","ATSC","ARIB")
+EXCEL_VERSION = ("webOS 4.0 이상", "webOS 3.5")
 
 DISPLAY_TYPE_NAME = 'Country Name'
 DISPLAY_TYPE_CODE2 = 'Country Code2'
@@ -90,3 +96,21 @@ DISPLAY_TYPES = [DISPLAY_TYPE_NAME, DISPLAY_TYPE_CODE2, DISPLAY_TYPE_CODE3]
 KEY_HOME = '"HOME"'
 KEY_RIGHT = '"RIGHT"'
 KEY_EXIT = '"EXIT"'
+ORDER_TYPE = "HOME"
+KEY_OK = '"ENTER"'
+
+STATE_HOME = 'home'
+STATE_ALERT = 'alertView'
+
+SELECTED_FORM_X = 2#12
+SELECTED_FORM_Y = 10#12#22
+SELECTED_FORM_W = 250#350
+SELECTED_FORM_H = 187
+
+NONE_ICON_PATH = 'resources/NoneIcon.png'
+
+INFO_CHANGERESULT_TO_OK = """
+결과를 OK로 변경하시겠습니까?
+만약 결과를 OK로 변경 후 해당 창을 종료할 시,
+다시 이 결과 내용을 확인할 수 없게 됩니다.
+"""
