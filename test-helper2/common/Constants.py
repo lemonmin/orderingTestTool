@@ -20,7 +20,7 @@ MESSAGE_GUIDE = 'Test Helper 도움말\n\n' \
 '* 파일다운로드를 위해 SCP 설치\n' \
 '   (Power On 시 마다 a,c 단계 수행)\n' \
 '   1) Putty 에서 SSH로 TV 연결 (id : root)\n' \
-'   2) ‘root@LGwebOSTV : ~#’ 에서 wget xownsla1.dothome.co.kr/scp.sh 입력 \n' \
+'   2) ‘root@LGwebOSTV : ~#’ 에서 wget swdqa.github.io/scp.sh 입력 \n' \
 '   3) ‘root@LGwebOSTV : ~#’ 에서 sh scp.sh 입력\n' \
 '   4) Password 요구 시 무시하고 Enter 키 3번 입력\n\n' \
 
