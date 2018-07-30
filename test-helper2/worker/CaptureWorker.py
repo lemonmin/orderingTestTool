@@ -13,7 +13,7 @@ class CaptureWorker:
         self.tvController = TvController()
 
     def doScreenCapture(self, ip, fileName):
-        fileName = '/tmp/captured_' + fileName + '.jpg'
+        fileName = '/tmp/captured_' + fileName + '.png'
         print('captureApp : ' + fileName)
         result = TvModel()
         isConnected = self.tvController.connect(ip)

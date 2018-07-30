@@ -6,7 +6,7 @@ import traceback
 import json
 
 CURRENT_STATE = 'currentState'
-STATE_HOME = 'home'
+
 
 class AppWorker:
     def __init__(self):
@@ -26,7 +26,6 @@ class AppWorker:
         return result
 
     def inputKey(self, ip, key, times):
-        print('inputHomeKey')
         result = TvModel()
         isConnected = self.tvController.connect(ip)
         if isConnected:
@@ -44,9 +43,12 @@ class AppWorker:
             result = self.tvController.execCommand(LunaCommands.confirmCurrentState(self))
             self.tvController.disconnect()
             if self.__loadCurrentState(result.resultValue) == STATE_HOME:
-                return True
+                return True, STATE_HOME
+            elif self.__loadCurrentState(result.resultValue) == STATE_ALERT:
+                print("STATE ALERT!!!!!!!!!!!!!!!!!!!!!")
+                return False, STATE_ALERT
             else:
-                return False
+                return False, 'None'
 
     def __loadCurrentState(self, currentState):
         print('__loadCurrentState : ' + currentState)

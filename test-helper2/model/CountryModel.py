@@ -9,7 +9,10 @@ class CountryModel:
         self.continentIndexList = []
         self.languageCountryList = []
         self.hwSettingsList = []
-        self.countryNameList = []
+        self.countryNameList = [] # Country Full Name을 저장하고 있음. 형식은 CountryName(2자리 code, 3자리 code)
+        self.DVBcountryList = []
+        self.ATSCcountryList = []
+        self.ARIBcountryList = []
         self.countryList = {}
         self.currentLanguageCountry = ''
         self.currentHwSettings = ''
