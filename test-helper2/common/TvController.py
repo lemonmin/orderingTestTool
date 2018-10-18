@@ -51,7 +51,7 @@ class TvController:
                 break
             time.sleep(2)
             checkTime += 1
-
+            
     def execCommand(self, command):
         tvModel = TvModel()
         self.check = False

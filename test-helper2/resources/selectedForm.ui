@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>912</width>
-    <height>555</height>
+    <height>627</height>
    </rect>
   </property>
   <property name="palette">
@@ -1324,7 +1324,7 @@ QCheckBox::indicator:disabled, QRadioButton::indicator:disabled
      <x>50</x>
      <y>40</y>
      <width>811</width>
-     <height>211</height>
+     <height>271</height>
     </rect>
    </property>
    <property name="palette">
@@ -1562,7 +1562,7 @@ QCheckBox::indicator:disabled, QRadioButton::indicator:disabled
       <x>10</x>
       <y>20</y>
       <width>791</width>
-      <height>181</height>
+      <height>241</height>
      </rect>
     </property>
     <property name="palette">
@@ -1992,7 +1992,7 @@ QCheckBox::indicator:disabled, QRadioButton::indicator:disabled
        <x>0</x>
        <y>0</y>
        <width>789</width>
-       <height>179</height>
+       <height>239</height>
       </rect>
      </property>
     </widget>
@@ -2002,7 +2002,7 @@ QCheckBox::indicator:disabled, QRadioButton::indicator:disabled
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>260</y>
+     <y>320</y>
      <width>811</width>
      <height>281</height>
     </rect>
@@ -2922,7 +2922,7 @@ QCheckBox::indicator:disabled, QRadioButton::indicator:disabled
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>230</y>
+     <y>290</y>
      <width>31</width>
      <height>51</height>
     </rect>
@@ -3350,7 +3350,7 @@ QCheckBox::indicator:disabled, QRadioButton::indicator:disabled
    <property name="geometry">
     <rect>
      <x>870</x>
-     <y>230</y>
+     <y>290</y>
      <width>31</width>
      <height>51</height>
     </rect>

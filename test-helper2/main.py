@@ -57,9 +57,18 @@ class MyWindowClass(QtWidgets.QMainWindow):
             self.excelDir.setText(mydata[KEY_EXCEL_DIR])
             self.zipDir.setText(mydata[KEY_ZIP_DIR])
 
+            self.setPlatVer()
+
         except Exception as e:
             print('*** __initUI, Caught exception: %s: %s' % (e.__class__, e))
             self.ipEdit.setText('192.168.0.10')
+
+    def setPlatVer(self):
+        currentPlatVer = self.platformCombo2ordering.currentText().strip()
+        if currentPlatVer == PLATFROMS[2]: # 4.5
+            self.matchingWorker.setSizeInfo(WO45_SIZE_INFO)
+        else: # 3.0 / 3.5 / 4.0
+            self.matchingWorker.setSizeInfo(WO40_SIZE_INFO)
 
     def closeEvent(self, event):
         ip = self.ipEdit.text().strip()
@@ -73,7 +82,7 @@ class MyWindowClass(QtWidgets.QMainWindow):
             pickle.dump(mydata, open('mydata.pickle', 'wb'))
             self.appClosed = True
             # key release
-            self.powerWorker.keyBlock(ip, False)
+            # self.powerWorker.keyBlock(ip, False)
             QtWidgets.QMainWindow.closeEvent(self, event)
         except Exception as e:
             print('*** closeEvent, Caught exception: %s: %s' % (e.__class__, e))
@@ -228,11 +237,11 @@ class MyWindowClass(QtWidgets.QMainWindow):
             excelPath = self.excelDir.text().strip()
             resourcePath = self.resourceDir.text().strip()
             platform = self.platformSelectCombo.currentText().strip()
+            currentPlatVer = self.platformCombo2ordering.currentText().strip()
             ip = self.ipEdit.text().strip()
             failList = [] # 국가 변경이나 capture 실패한 것들 재실행을 위한 List
             ngList = [] # check 후 NG인 애들 report용
 
-            # 첫 번째 Tab에서 받아온 CountryNameList로 loop.
             for count,i in enumerate(testList):
                 if self.appClosed == True:
                     print("received closeEvent.")
@@ -249,7 +258,7 @@ class MyWindowClass(QtWidgets.QMainWindow):
                         self.powerWorker.reboot(ip, excelVer)
                         time.sleep(30)
                         # key block
-                        self.powerWorker.keyBlock(ip)
+                        # self.powerWorker.keyBlock(ip)
                         # 약관 동의 해제
                         self.powerWorker.setEULA(ip)
                         time.sleep(0.5)
@@ -260,36 +269,54 @@ class MyWindowClass(QtWidgets.QMainWindow):
                             # 4회인 이유는 혹시 연달아서 뜨는 것들이 있을까봐
                             self.appWorker.inputKey(ip, KEY_EXIT, 4)
 
-                            # Home Key 실행
-                            self.appWorker.inputKey(ip, KEY_HOME, 1)
-                            # 현재 Home이 떠 있는 상황인지 Check
-                            isHome, value = self.appWorker.checkHomeShowing(ip)
-                            while not isHome:
-                                if value == STATE_ALERT or value == 'None':
+                            if currentPlatVer == PLATFROMS[2]: # 4.5
+                                self.appWorker.inputKey(ip, KEY_HOME, 1)
+                                time.sleep(0.5)
+                                isHome = self.appWorker.checkForegroundAppIsHome(ip)
+                                while not isHome:
                                     self.appWorker.inputKey(ip, KEY_OK, 1)
-                                if value != STATE_HOME:
+                                    time.sleep(0.5)
                                     self.appWorker.inputKey(ip, KEY_HOME, 1)
+                                    isHome = self.appWorker.checkForegroundAppIsHome(ip)
+
+                            # 현재 Home이 떠 있는 상황인지 Check
+                            else: # webOS 4.5에서는 currunt state가 HOME으로 안옴..
+                                self.appWorker.inputKey(ip, KEY_HOME, 1)
+                                time.sleep(0.5)
                                 isHome, value = self.appWorker.checkHomeShowing(ip)
-                            # 10칸 오른쪽 옆으로 감 (모든 CP Apps Capture를 위해)
-                            self.appWorker.inputKey(ip, KEY_RIGHT, 10)
-                            # Home이 떠 있는 상황일 때 Capture 진행
-                            print("HOME!!!!!!!!! ",isHome)
-                            print("################### str(i) ====",str(i))
-                            resultCapture = self.captureWorker.doScreenCapture(ip, str(i))
-                            time.sleep(1.5)
-                            if resultCapture.resultType == RESULT_SUCCESS:
-                                print("Capture Success!!")
-                                result = self.matchingWorker.doMatching(excelPath, platform, resourcePath, str(i), excelVer)
+                                while not isHome:
+                                    if value == STATE_ALERT or value == 'None':
+                                        self.appWorker.inputKey(ip, KEY_OK, 1)
+                                    if value != STATE_HOME:
+                                        self.appWorker.inputKey(ip, KEY_HOME, 1)
+                                    isHome, value = self.appWorker.checkHomeShowing(ip)
+                                # 10칸 오른쪽 옆으로 감 (모든 CP Apps Capture를 위해)
+                                self.appWorker.inputKey(ip, KEY_RIGHT, 10)
+
+                            # TBD : For 데모. 삭제 필요.(if else 구문)
+                            if not os.path.exists('captured_' + str(i) + '.png'):
+                                resultCapture = self.captureWorker.doScreenCapture(ip, str(i))
+                                time.sleep(1.5)
+                                if resultCapture.resultType == RESULT_SUCCESS:
+                                    print("Capture Success!!")
+                                    result = self.matchingWorker.doMatching(excelPath, platform, resourcePath, str(i), excelVer, self.logFileContents)
+                                    if result == None:
+                                        failList.append(str(i))
+                                        continue
+                                    self.appendListViewSignal.emit(result)
+                                    time.sleep(1)
+                                else:
+                                    print("Capture Fail!!!!!!")
+                                    failList.append(str(i))
+                                    print("Fail List : ",failList)
+                                    continue
+                            else:
+                                result = self.matchingWorker.doMatching(excelPath, platform, resourcePath, str(i), excelVer, self.logFileContents)
                                 if result == None:
                                     failList.append(str(i))
                                     continue
                                 self.appendListViewSignal.emit(result)
                                 time.sleep(1)
-                            else:
-                                print("Capture Fail!!!!!!")
-                                failList.append(str(i))
-                                print("Fail List : ",failList)
-                                continue
 
                             # 열려 있는 Launcher를 닫는 용도
                             self.appWorker.inputKey(ip, KEY_EXIT, 1)
@@ -308,6 +335,10 @@ class MyWindowClass(QtWidgets.QMainWindow):
                 else:
                     self.resultText.setText(MESSAGE_NO_INPUT_CHANGE_COUNTRY)
             print("END!!!! Fail List :", failList)
+
+            # key release
+            # self.powerWorker.keyBlock(ip, False)
+
             return failList
         except Exception as e:
             print('*** orderingCheckLoop, Caught exception: %s: %s' % (e.__class__, e))
@@ -361,6 +392,11 @@ class MyWindowClass(QtWidgets.QMainWindow):
             countryModel = self.countryWorker.countryModel
             self.matchingWorker.copyAllIcons(self.zipDir.text().strip(), self.resourceDir.text().strip())
 
+            # temp
+            self.logFile = open('./test_log.txt','r+')
+            self.logFileContents = self.logFile.read().split('\n')
+
+
             countiresFromCountryModel = []
             if currentChip == DIV_CHIP_VALUES[0]: #DVB
                 countiresFromCountryModel = self.countryWorker.countryModel.DVBcountryList
@@ -391,12 +427,18 @@ class MyWindowClass(QtWidgets.QMainWindow):
                 tryCount += 1
                 print("******* Try Count : ", tryCount)
             # TBD : 모든 확인 이후 처리구문
+            self.logFile.write(''.join(self.logFileContents))
+            self.logFile.close()
+            print("write logFileContents = ",logFileContents)
             if len(failList)>0:
                 self.appendResultTextSignal.emit("Test Finished! Some list was not tested : "+str(failList))
             else:
                 self.appendResultTextSignal.emit("Test Finished!!! Total count : "+str(self.listModel.rowCount())+"/"+str(len(testList)))
+
+            # temp
+
             # key release
-            self.powerWorker.keyBlock(ip, False)
+            # self.powerWorker.keyBlock(ip, False)
 
             self.excelWorker.makeResultFile(currentChip, platform, self.ngList, self.okList)
             self.filterCombo.setEnabled(True)
@@ -430,6 +472,7 @@ class MyWindowClass(QtWidgets.QMainWindow):
         excelPath = self.excelDir.text().strip()
         selecPlatform = self.platformSelectCombo.currentText().strip()
         currentExcelVer = self.excelVerCombo.currentText().strip()
+        self.setPlatVer()
         if currentExcelVer == EXCEL_VERSION[0]: # 4.0
             plat = selecPlatform if '-' not in selecPlatform else selecPlatform.split('-')[1]
             self.matchingWorker.loadAllCountriesInCurrentPlatform(excelPath, plat)
@@ -463,7 +506,9 @@ class MyWindowClass(QtWidgets.QMainWindow):
             self.ngList = []
             self.resultList.setModel(self.listModel)
 
+            # self.countryWorker.downloadCountryFile(ip)
             # 국가 정보를 가져옴
+
             result = self.countryWorker.inquery(ip, platform, DISPLAY_TYPE_NAME, False)
             if result.resultType != RESULT_SUCCESS:
                 self.resultText.setText(result.message)
@@ -472,6 +517,7 @@ class MyWindowClass(QtWidgets.QMainWindow):
                 self.countryWorker.devDVBorATSC()
                 self.orderingTestThread = threading.Thread(target=self.orderingTestFunction)
                 self.orderingTestThread.start()
+
         except Exception as e:
             print('*** orderingTVCheckStartBtnClicked Caught exception: %s: %s' % (e.__class__, e))
             traceback.print_exc()
@@ -491,7 +537,7 @@ class MyWindowClass(QtWidgets.QMainWindow):
         if currentExcelVer == EXCEL_VERSION[0]: # WO4.0
             folderName = QtWidgets.QFileDialog.getOpenFileName(self, "Open File","")
             self.excelDir.setText(str(folderName[0]))
-        else: # WO 3.5
+        elif currentExcelVer == EXCEL_VERSION[0]: # WO 3.5
             self.firstCall = True
             folderName = QtWidgets.QFileDialog.getExistingDirectory(self, "Open File","")
             if folderName != '':
@@ -563,7 +609,7 @@ class MyWindowClass(QtWidgets.QMainWindow):
             msg.setStandardButtons(QMessageBox.Ok)
         elif msgType == 'TYPE_INFORMATION':
             # msg.setIcon(QMessageBox.Information)
-            msg.setWindowTitle("Test Helper 도움말")
+            msg.setWindowTitle("Ordering Auto Test 도움말")
             msg.setStandardButtons(QMessageBox.Ok)
         elif msgType == 'TYPE_QUESTION':
             msg.setIcon(QMessageBox.Question)

@@ -1,12 +1,12 @@
-MESSAGE_GUIDE = 'Test Helper 도움말\n\n' \
-'1. 실행 환경 : Windows7 32 bit\n\n' \
+MESSAGE_GUIDE = '도움말\n\n' \
+'1. 실행 환경 : Windows7\n\n' \
 '2. 사용 방법\n' \
 '   1) 만약, 양산버전일 경우 WTA 및 SCP 설치 필요\n' \
 '   2) PC, TV 모두 같은 공유기에 연결\n' \
-'   3) PC에서 Test Helper Tool을 실행\n' \
-'   4) Test Helper Tool에서 Tool Password를 입력하고 확인버튼 선택\n' \
-'   5) Test Helper Tool 기능이 활성화됨\n' \
-'   6) Test Helper Tool에서 TV IP를 입력후 국가변경, App 검색, 화면캡쳐, 로그추출, 파일을 JIRA에 첨부 할 수 있음\n\n' \
+'   3) PC에서 Tool을 실행\n' \
+'   4) Tool에서 Tool Password를 입력하고 확인버튼 선택\n' \
+'   5) Tool 기능이 활성화됨\n' \
+'   6) Tool에서 TV IP를 입력후 국가변경, App 검색, 화면캡쳐, 로그추출, 파일을 JIRA에 첨부 할 수 있음\n\n' \
 '* SSH 기능 활성화를 위해 TV 에 WTA 설치 \n' \
 '   (Intop 후 1회 설치 필요)\n' \
 '   1) Acesss USB 연결\n' \
@@ -40,7 +40,7 @@ MESSAGE_TV_ABNORMAL = 'TV 연결을 실패하였습니다. TV IP 또는 TV가 �
     + '3. ‘root@LGwebOSTV : ~#’ 에서 sh scp.sh 입력\n' \
     + '4. Password 요구 시 무시하고 Enter 키 3번 입력\n'
 
-MESSAGE_NO_INPUT_TOOL_PWD = 'Test Helper Tool을 사용하려면, Tool Password 를 입력하고 확인버튼을 선택해주세요.'
+MESSAGE_NO_INPUT_TOOL_PWD = 'Tool을 사용하려면, Tool Password 를 입력하고 확인버튼을 선택해주세요.'
 MESSAGE_ERROR_PWD = 'Tool Password 를 잘 못 입력하였습니다.'
 MESSAGE_SUCCESS_PWD = 'Tool Password 확인을 완료하였습니다.'
 
@@ -75,13 +75,14 @@ LOAD_COUNTRY = 'Common'
 ORDERING_TEST = 'Ordering'
 
 PLATFROM_WEBOS3 = 'webOS3.0'
-PLATFROM_WEBOS35 = 'webOS3.5이상'
+PLATFROM_WEBOS35 = 'webOS3.5/4.0'
+PLATFROM_WEBOS45 = 'webOS4.5'
 
 COUNTRY_CODES_FILE_WEBOS3 = '../resources/country_codes_v5_webOS3.xml'
 COUNTRY_CODES_FILE_WEBOS35 = '../resources/country_codes_v5_webOS35.xml'
 
-PLATFROMS = [PLATFROM_WEBOS35, PLATFROM_WEBOS3]
-PLATFROMS_FILE = {PLATFROM_WEBOS3:COUNTRY_CODES_FILE_WEBOS3, PLATFROM_WEBOS35:COUNTRY_CODES_FILE_WEBOS35}
+PLATFROMS = [PLATFROM_WEBOS35, PLATFROM_WEBOS3, PLATFROM_WEBOS45]
+PLATFROMS_FILE = {PLATFROM_WEBOS3:COUNTRY_CODES_FILE_WEBOS3, PLATFROM_WEBOS35:COUNTRY_CODES_FILE_WEBOS35, PLATFROM_WEBOS45:COUNTRY_CODES_FILE_WEBOS35}
 ORDERING_FILTER = ("None","OK","NG")
 RESULT_VALUES = ("NG","OK")
 DIV_CHIP_VALUES = ("DVB","ATSC","ARIB")
@@ -107,6 +108,36 @@ SELECTED_FORM_Y = 10#12#22
 SELECTED_FORM_W = 250#350
 SELECTED_FORM_H = 187
 
+WO35_SIZE_INFO = {
+'width' : int(133*1.5),
+'gap' : int(40*1.5),
+'y_margin' : int(20*1.5),
+'startX' : int(84*1.5),
+'crop_y_start' : int(505*1.5),
+'crop_y_end' : int(710*1.5)
+}
+
+WO40_SIZE_INFO = {
+'width' : int(133*1.5),
+'gap' : int(40*1.5),
+'y_margin' : int(20*1.5),
+'startX' : int(84*1.5),
+'crop_y_start' : int(505*1.5),
+'crop_y_end' : int(710*1.5)
+}
+
+WO45_SIZE_INFO = {
+'width' : 188,
+'gap' : 46,
+'y_margin' : 10,
+'startX' : 443,
+'crop_y_start' : 830,
+'crop_y_end' : 1079
+}
+
+FX_FY = 0.6956521739130435
+# FX_FY = 1.130434782608696
+
 NONE_ICON_PATH = 'resources/NoneIcon.png'
 
 INFO_CHANGERESULT_TO_OK = """
@@ -114,3 +145,8 @@ INFO_CHANGERESULT_TO_OK = """
 만약 결과를 OK로 변경 후 해당 창을 종료할 시,
 다시 이 결과 내용을 확인할 수 없게 됩니다.
 """
+
+
+# temp
+logFile = None
+logFileContents = []

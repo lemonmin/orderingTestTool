@@ -11,7 +11,6 @@ import json
 import shutil
 import collections
 from PIL import Image
-from matplotlib import pyplot as plt # 임시
 import os
 from pathlib import Path
 
@@ -19,34 +18,71 @@ class MatchingWorker:
     def __init__(self):
         self.tvController = TvController()
         self.countries = []
+        self.sizeInfo = None
+
+
+        # temp
+        self.logFileContents = None
+
+    def setSizeInfo(self, size_info):
+        self.sizeInfo = size_info
 
     # Capture 이미지를 load해서 CP기준으로 자른 이미지 list return
     def loadCaptureAndCrop(self, fileName):
         captureDir = "download/"+fileName
         if not os.path.exists(captureDir):
             os.makedirs(captureDir)
-        capture = self.getOnlyOrderingPartOfCapture(fileName)
-        cps = self.divImg(capture, captureDir)
-        return cps
+            # TBD : for 데모, 아래 return까지를 if not 구문 밖으로 빼야함. 데모용으로 잠깐 넣어둠
+            capture = self.getOnlyOrderingPartOfCapture(fileName)
+            cps = self.divImg(capture, captureDir)
+            return cps
+        # for 데모, 지워야하는 els구문
+        else:
+            capture = self.getOnlyOrderingPartOfCapture(fileName)
+            cps = self.getCpsForDemo(captureDir)
+            return cps
+
+    # for 데모
+    def getCpsForDemo(self, captureDir):
+        lists = os.listdir(captureDir)
+        lists_m = [int(n.split('.')[0]) for n in lists]
+        lists = [str(n)+".png" for n in sorted(lists_m)]
+        resultImg = []
+        for file in lists:
+            path = captureDir + '/' + file
+            capture = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+            capture = cv2.cvtColor(capture, cv2.COLOR_BGR2RGB)
+            resultImg.append(capture)
+        return resultImg
 
     def getOnlyOrderingPartOfCapture(self, fileName):
         capturePath = "download/captured_"+fileName+".png"
 
         capture = cv2.imread(capturePath, cv2.IMREAD_UNCHANGED)
         capture = cv2.cvtColor(capture, cv2.COLOR_BGR2RGB)
+        capture = cv2.resize(capture, None, fx=FX_FY, fy=FX_FY)
         # resize, 1920 1080 캡쳐일때
         # capture = cv2.resize(capture, (1280, 720))
 
-        capture = capture[505:710, :, :]
+        capture = capture[int(self.sizeInfo['crop_y_start']*FX_FY):int(self.sizeInfo['crop_y_end']*FX_FY)\
+        if int(self.sizeInfo['crop_y_end']*FX_FY) <= capture.shape[0] else capture.shape[0], :, :]
 
         return capture
 
     # Capture 이미지의 각 CP를 잘라서 return
     def divImg(self, img, captureDir):
+        """
         width = 133 # 133
         gap = 40
         y_margin = 20
         startX = 44 + gap
+        """
+        width = int(self.sizeInfo['width']*FX_FY)
+        gap = int(self.sizeInfo['gap']*FX_FY)
+        y_margin = int(self.sizeInfo['y_margin']*FX_FY)
+        startX = int(self.sizeInfo['startX']*FX_FY)
+        print("!!!!!!!!!!!!!!!! self.sizeInfo == ",width, gap, y_margin, startX)
+        print("!!!!!!!!!!!!!!img size!!!!!! == ",img.shape)
         resultImg = []
         index = 0
         while startX <= img.shape[1]:
@@ -259,6 +295,7 @@ class MatchingWorker:
                                         else:
                                             height, width, _ = img.shape
                                             if height == width == 80:
+                                            # if height == width == 130:
                                                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                                                 imgs[index] = (iconPath, img)
                                                 index += 1
@@ -282,15 +319,37 @@ class MatchingWorker:
         except Exception as e:
             print('*** readIcons, Caught exception: %s: %s' % (e.__class__, e))
 
+    def getImgPyramid(self, targetImg, min_range=0.8, max_range=1.5, gap=0.05):
+        tmp = targetImg.copy()
+        pyramid = []
+        pyramid.append(tmp)
+        rate = min_range
+        while rate <= max_range:
+            tmp1 = cv2.resize(tmp, None, fx=rate, fy=rate)
+            pyramid.append(tmp1)
+            rate += gap
+
+        return pyramid
+
     # iconImage가 baseImage에 포함되어있는지를 확인하는 함수
     def checkImageIncluded(self, baseImg, iconImg):
+        global logFile, logFileContents
         #baseImg = cv2.imread(baseImgPath, cv2.IMREAD_COLOR)
         #iconImg = cv2.imread(iconImagePath, cv2.IMREAD_COLOR)
 
         baseImgCopy = baseImg.copy()
         #res = cv2.matchTemplate(baseImgCopy, iconImg, cv2.TM_CCOEFF_NORMED)
+        print("!!!!!!!!!!!!!!!!!! baseImgCopy size == ",baseImgCopy.shape)
+        print("!!!!!!!!!!!!!!!!!! iconImg size == ",iconImg.shape)
         res = cv2.matchTemplate(baseImgCopy, iconImg, cv2.TM_CCOEFF_NORMED)
-        loc = np.where(res > 0.84)
+        ### temp
+        max = np.max(res)
+        print("######################## max = ",max)
+        self.logFileContents.append("max = "+str(max)+"\n")
+        print("update logFileContents,",logFileContents)
+
+        # TBD: for 데모 원래 기준 0.97
+        loc = np.where(res > 0.956)
         count = 0
         for i in zip(*loc[::-1]):
             count += 1
@@ -299,7 +358,9 @@ class MatchingWorker:
         else:
             return False
 
-    def doMatching(self, excelPath, platform, loadIconPath, captureFileName, excelVer):
+    def doMatching(self, excelPath, platform, loadIconPath, captureFileName, excelVer, logFileCnt):
+        if self.logFileContents == None:
+            self.logFileContents = logFileCnt
         countryCode = captureFileName.split('(')[1].split(',')[0] # get Country code from captureFileName
         countryName = captureFileName.strip('.png').strip()
         strAppIds = self.parsingOrderingExcel(excelPath, platform, countryCode, excelVer)
@@ -309,23 +370,29 @@ class MatchingWorker:
             iconImgs = self.readIcons(loadIconPath, strAppIds) # 0부터 시작
             cpImgs = self.loadCaptureAndCrop(captureFileName) # 0부터 시작
             preResultCondition = True
-            for index in range(len(iconImgs)):
-                resCondition = self.checkImageIncluded(cpImgs[index], iconImgs[index][1])
-                '''
-                if resCondition == False:
-                    print("****************** resCondition = ", resCondition)
-                    plt.subplot(121),plt.imshow(cpImgs[index],cmap = 'gray')
-                    plt.title('base'), plt.xticks([]), plt.yticks([])
-                    plt.subplot(122),plt.imshow(iconImgs[index][1],cmap = 'gray')
-                    plt.title('icon'), plt.xticks([]), plt.yticks([])
-                    plt.suptitle(resCondition)
 
-                    plt.show()
-                '''
+            for index in range(len(iconImgs)):
+                resCondition = False
+                # pyramid = self.getImgPyramid(iconImgs[index][1])
+                """
+                pyramid = self.getImgPyramid(cpImgs[index])
+                # for target in pyramid:
+                for cp in pyramid:
+                    # if self.checkImageIncluded(cpImgs[index], target):
+                    if self.checkImageIncluded(cp, iconImgs[index][1]):
+                        resCondition = True
+                        break
+                """
+                # temp
+                print("iconImgs[index][0] == ",iconImgs[index][0])
+                self.logFileContents.append("iconImgs[index][0] == "+iconImgs[index][0]+"\n")
+
+                resCondition = self.checkImageIncluded(cpImgs[index], iconImgs[index][1])
                 if resCondition == False:
                     # index도 0부터 시작
                     ngIcons.append([index, cpImgs[index], iconImgs[index]])
                 # List 중 하나라도 False가 있을 경우 전체 False
+                self.logFileContents.append("resCondition == "+str(resCondition)+"\n")
                 preResultCondition = preResultCondition and resCondition
             if preResultCondition:
                 return [countryName+":"+ORDERING_FILTER[1], None]

@@ -20,6 +20,7 @@ class CountryModel:
         self.currentCountry = ''
         self.platform = ''
         self.displayType = ''
+        self.countryFilePath = ''
 
     def setCurrentCountryByCode3(self, code3):
         for countryName in self.countryList.keys():

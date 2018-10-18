@@ -6,7 +6,7 @@ from model.TvModel import *
 from common.Constants import *
 from common.TvController import *
 import common.LunaCommands as LunaCommands
-import os
+import os, time
 
 KEY_AREA_OPTION = 'com.webos.app.factorywin.areaOption'
 KEY_CONFIG = 'configs'
@@ -294,3 +294,60 @@ class CountryWorker:
             else:
                 if not self.checkIncludeCountryName(countryName, self.countryModel.ATSCcountryList):
                     self.countryModel.ATSCcountryList.append(country)
+
+    def downloadCountryFile(self, ip):
+        print('downloadCountryFile : ')
+        result = TvModel()
+
+        #### TBD : 확인해보기
+        self.countryModel = CountryModel()
+
+
+
+        isConnected = self.tvController.connect(ip)
+        if isConnected:
+            result = self.tvController.execCommand(LunaCommands.getCountryListPath(self))
+            if result.resultType == RESULT_SUCCESS:
+                try:
+                    res = json.loads(result.resultValue)
+                    countryListPath = res['path'].strip()
+                    print("countryListPath === ",countryListPath)
+
+                    # cmd = 'cp '+str(countryListPath)+' /tmp/'
+                    # print("cmd === ",cmd)
+                    # self.tvController.execSimpleCommand(cmd)
+                    # time.sleep(0.3)
+                    fileName = countryListPath.split('/')[-1]
+                    if os.path.exists('download/'+fileName):
+                        print("already existed!!!")
+                    else:
+                        result = self.tvController.downloadFile(countryListPath)
+                        if result.resultType == RESULT_SUCCESS:
+                            try:
+                                # cmd = 'mv ../download/'+str(fileName)+' ../resources/'
+                                # print("cmd === ",cmd)
+                                # self.tvController.execSimpleCommand(cmd)
+                                # time.sleep(0.3)
+                                # if os.exist('../resources/'+fileName):
+                                #     self.countryModel.countryFilePath = '../resources/'+fileName
+                                print("file Name == ",fileName)
+                                if os.path.exists('download/'+fileName):
+                                    self.countryModel.countryFilePath = 'download/'+fileName
+                                else:
+                                    print("error anything!!!")
+                                print("====== self.countryFilePath ===== ",self.countryModel.countryFilePath)
+                            except Exception as e:
+                                print('*** Caught move exception: %s: %s' % (e.__class__, e))
+                                traceback.print_exc()
+                                result.message = MESSAGE_ERROR + str(e)
+                        else:
+                            print("download fail!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                except Exception as e:
+                    print('*** Caught download exception: %s: %s' % (e.__class__, e))
+                    traceback.print_exc()
+                    result.message = MESSAGE_ERROR + str(e)
+            self.tvController.disconnect()
+        else:
+            result.message = MESSAGE_TV_ABNORMAL
+
+        return result

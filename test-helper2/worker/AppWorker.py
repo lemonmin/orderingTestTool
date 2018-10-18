@@ -6,6 +6,7 @@ import traceback
 import json
 
 CURRENT_STATE = 'currentState'
+FOREGROUND_APP_INFO = 'foregroundAppInfo'
 
 
 class AppWorker:
@@ -50,8 +51,18 @@ class AppWorker:
             else:
                 return False, 'None'
 
+    def checkForegroundAppIsHome(self, ip):
+        result = TvModel()
+        isConnected = self.tvController.connect(ip)
+        if isConnected:
+            result = self.tvController.execCommand(LunaCommands.getForegroundApp(self))
+            self.tvController.disconnect()
+            foregroundApp = json.loads(result.resultValue)
+            for app in foregroundApp[FOREGROUND_APP_INFO]:
+                if app["appId"] == "com.webos.app.home":
+                    return True
+            return False
+
     def __loadCurrentState(self, currentState):
-        print('__loadCurrentState : ' + currentState)
         currentStateDict = json.loads(currentState)
-        print(currentStateDict[CURRENT_STATE])
         return currentStateDict[CURRENT_STATE]

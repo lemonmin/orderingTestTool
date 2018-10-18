@@ -28,9 +28,15 @@ def setEULA(self, state=False):
            '"cookiesAllowed": '+ state +',"customAdAllowed": '+ state +',"customadsAllowed": '+ state +',"generalTermsAllowed": '+ state +',"networkAllowed": '+ state +',"remoteDiagAllowed": '+ state +','+\
            '"voiceAllowed": '+ state +' }}}\''
 
+def getCountryListPath(self):
+    return 'luna-send -n 1 -f luna://com.webos.service.sdx/getCountryCodePath \'{}\''
+
 # Input Key
 def inputKey(self, key):
     return 'luna-send -n 1 -f ' + NETWORK_INPUT + '/sendSpecialKey \'{ "key" : ' + key + ' }\''
+
+def getForegroundApp(self):
+    return 'luna-send -n 1 -f luna://com.webos.applicationManager/getForegroundAppInfo \'{"subscribe":false, "extraInfo":true}\''
 
 # confirm HOME is showing
 def confirmCurrentState(self):
@@ -46,7 +52,7 @@ def doScreenCapture(self, fileName):
     #luna-send -n 1 luna://com.webos.service.tv.capture/executeOneShot '{"path":"/tmp/kids_eye.jpg", "method":"DISPLAY", "width":1920, "height":1080, "format":"JPEG"}'
     #luna-send -n 1 luna://com.webos.service.tv.capture/executeOneShot '{"path":"/tmp/ivi_TV_First_Screen.jpg", "method":"DISPLAY", "width":1280, "height":720, "format":"JPEG"}'
     # if resolution == 1280:
-    return 'luna-send -n 1 -f ' + CAPTURE_SERVICE + '/executeOneShot \'{"path":"' + fileName + '", "method":"DISPLAY", "width":1280, "height":720, "format":"PNG"}\''
+    return 'luna-send -n 1 -f ' + CAPTURE_SERVICE + '/executeOneShot \'{"path":"' + fileName + '", "method":"DISPLAY", "width":1920, "height":1080, "format":"PNG"}\''
     # else:
     #     return 'luna-send -n 1 luna://com.webos.service.tv.capture/executeOneShot \'{"path":"/tmp/' + filename + '", "method":"DISPLAY", "width":1920, "height":1080, "format":"JPEG"}\''
 
