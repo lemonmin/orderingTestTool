@@ -32,17 +32,10 @@ class MatchingWorker:
         captureDir = "download/"+fileName
         if not os.path.exists(captureDir):
             os.makedirs(captureDir)
-            # TBD : for 데모, 아래 return까지를 if not 구문 밖으로 빼야함. 데모용으로 잠깐 넣어둠
-            capture = self.getOnlyOrderingPartOfCapture(fileName)
-            cps = self.divImg(capture, captureDir)
-            return cps
-        # for 데모, 지워야하는 els구문
-        else:
-            capture = self.getOnlyOrderingPartOfCapture(fileName)
-            cps = self.getCpsForDemo(captureDir)
-            return cps
+        capture = self.getOnlyOrderingPartOfCapture(fileName)
+        cps = self.divImg(capture, captureDir)
+        return cps
 
-    # for 데모
     def getCpsForDemo(self, captureDir):
         lists = os.listdir(captureDir)
         lists_m = [int(n.split('.')[0]) for n in lists]
@@ -60,7 +53,7 @@ class MatchingWorker:
 
         capture = cv2.imread(capturePath, cv2.IMREAD_UNCHANGED)
         capture = cv2.cvtColor(capture, cv2.COLOR_BGR2RGB)
-        capture = cv2.resize(capture, None, fx=FX_FY, fy=FX_FY)
+        # capture = cv2.resize(capture, None, fx=FX_FY, fy=FX_FY)
         # resize, 1920 1080 캡쳐일때
         # capture = cv2.resize(capture, (1280, 720))
 
@@ -102,10 +95,12 @@ class MatchingWorker:
         colcnt = sheet.ncols # sheet의 column수
 
         for row in range(rowcnt):
-            loadPlatform = sheet.cell_value(row, 0)  # 0번 Index가 Product-Platform
+            # loadPlatform = sheet.cell_value(row, 0)  # 0번 Index가 Product-Platform
+            loadPlatform = sheet.row_values(row)[sheet.row_values(0).index("Product-Platform")]
             if platform in loadPlatform:
                 #loadCountry = sheet.cell_value(row, 4)  # 4번 Index가 Country name
-                loadCountry = sheet.cell_value(row, 5)  # 5번 Index가 Country code
+                # loadCountry = sheet.cell_value(row, 5)  # 5번 Index가 Country code
+                loadCountry = sheet.row_values(row)[sheet.row_values(0).index("Country Code")]
                 loadCountry = loadCountry.strip()
                 if loadCountry not in self.countries:
                     self.countries.append(loadCountry)
@@ -125,7 +120,8 @@ class MatchingWorker:
                         colcnt = sheet.ncols # sheet의 column수
 
                         for row in range(rowcnt):
-                            loadCountry = sheet.cell_value(row, 4).strip()  # 5번 Index가 Country code
+                            # loadCountry = sheet.cell_value(row, 4).strip()  # 5번 Index가 Country code
+                            loadCountry = sheet.row_values(row)[sheet.row_values(0).index("Country Code")]
                             if loadCountry not in self.countries:
                                 if loadCountry != "Country Code":
                                     self.countries.append(loadCountry)
@@ -142,7 +138,8 @@ class MatchingWorker:
         platforsmList = []
 
         for row in range(rowcnt):
-            loadPlatform = sheet.cell_value(row, 0)  # 0번 Index가 Product-Platform
+            # loadPlatform = sheet.cell_value(row, 0)  # 0번 Index가 Product-Platform
+            loadPlatform = sheet.row_values(row)[sheet.row_values(0).index("Product-Platform")]
             platformStr = loadPlatform.split(',')
             for plat in platformStr:
                 stripPlat = plat.strip()
@@ -164,13 +161,18 @@ class MatchingWorker:
             # Order Type이 HOME인것만 남겨둠
             # Country Code에 일치하는 것만 남겨둠
             for row in range(rowcnt):
-                loadPlatform = sheet.cell_value(row, 0) # 0번 Index가 Product-Platform
-                loadCountryCode = sheet.cell_value(row, 5) # 5번 Index가 Country Code
-                loadOrderType = sheet.cell_value(row, 6) # 6번 Index가 Order Type
+                # loadPlatform = sheet.cell_value(row, 0) # 0번 Index가 Product-Platform
+                # loadCountryCode = sheet.cell_value(row, 5) # 5번 Index가 Country Code
+                # loadOrderType = sheet.cell_value(row, 6) # 6번 Index가 Order Type
+                loadPlatform = sheet.row_values(row)[sheet.row_values(0).index("Product-Platform")]
+                loadCountryCode = sheet.row_values(row)[sheet.row_values(0).index("Country Code")]
+                loadOrderType = sheet.row_values(row)[sheet.row_values(0).index("Order Type")]
                 if platform in loadPlatform and ORDER_TYPE == loadOrderType\
                 and countryCode == loadCountryCode:
-                    loadOrderNumber = sheet.cell_value(row, 10) # 10번 Index가 Order Number
-                    strAppIds[int(loadOrderNumber)] = sheet.cell_value(row, 9) # 10번 Index가 Str App Id
+                    # loadOrderNumber = sheet.cell_value(row, 10) # 10번 Index가 Order Number
+                    loadOrderNumber = sheet.row_values(row)[sheet.row_values(0).index("Order Number")]
+                    # strAppIds[int(loadOrderNumber)] = sheet.cell_value(row, 9) # 10번 Index가 Str App Id
+                    strAppIds[int(loadOrderNumber)] = sheet.row_values(row)[sheet.row_values(0).index("Str App Id")]
         else:
             files = os.listdir(excelPath)
             for f in files:
@@ -183,11 +185,14 @@ class MatchingWorker:
                             rowcnt = sheet.nrows # sheet의 row수
                             colcnt = sheet.ncols # sheet의 column수
                             for row in range(rowcnt):
-                                loadCountryCode = sheet.cell_value(row, 4).strip() # 4번 Index가 Country Code
+                                # loadCountryCode = sheet.cell_value(row, 4).strip() # 4번 Index가 Country Code
+                                loadCountryCode = sheet.row_values(row)[sheet.row_values(0).index("Country Code")]
                                 if countryCode == loadCountryCode:
-                                    loadOrderNumber = sheet.cell_value(row, 5).strip() # 5번 Index가 Order Number
+                                    # loadOrderNumber = sheet.cell_value(row, 5).strip() # 5번 Index가 Order Number
+                                    loadOrderNumber = sheet.row_values(row)[sheet.row_values(0).index("Order Number")]
                                     if loadOrderNumber != '-':
-                                        strAppIds[int(loadOrderNumber)] = sheet.cell_value(row, 9) # 9번 Index가 Str App Id
+                                        # strAppIds[int(loadOrderNumber)] = sheet.cell_value(row, 9) # 9번 Index가 Str App Id
+                                        strAppIds[int(loadOrderNumber)] = sheet.row_values(row)[sheet.row_values(0).index("Str App Id")]
                         except IndexError:
                             print("현재 Excel의 sheet 수는 기존보다 적습니다.")
                             continue
@@ -248,6 +253,7 @@ class MatchingWorker:
                 try:
                     dstPath = dstDir+'/'+appinfo['id']
                     os.mkdir(dstPath)
+                    # TBD : 받은 리소스에 mediumLargeIcon.png 가 있으면 이걸로 바꾸기
                     iconFileName = appinfo['icon']
                     targetIconPath = appForderPath + '/' + iconFileName
                     shutil.copy(targetIconPath, dstPath+"/icon.png")
@@ -272,7 +278,7 @@ class MatchingWorker:
                     if strAppIds[strIDKey] == filename:
                         filePath = os.path.join(loadPath, filename)
                         if os.path.isdir(filePath):
-                            iconPath = os.path.join(filePath, "icon.png")
+                            iconPath = os.path.join(filePath, "mediumLargeIcon.png")
                             if os.path.exists(iconPath):
                                 img = cv2.imread(str(Path(iconPath)), cv2.IMREAD_UNCHANGED)
                                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -280,6 +286,7 @@ class MatchingWorker:
                                 index += 1
                                 includeCheck = True
                             else:
+                                print("!!!!!!!!!!!!!!!!! Can't find icon.png !!!!!!!!!!!!!!!!!!!!!!")
                                 filePathNames = os.listdir(filePath)
                                 check = False
                                 for f in filePathNames:
@@ -294,7 +301,7 @@ class MatchingWorker:
                                             index += 1
                                         else:
                                             height, width, _ = img.shape
-                                            if height == width == 80:
+                                            if height == width == 115:
                                             # if height == width == 130:
                                                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                                                 imgs[index] = (iconPath, img)
@@ -332,7 +339,7 @@ class MatchingWorker:
         return pyramid
 
     # iconImage가 baseImage에 포함되어있는지를 확인하는 함수
-    def checkImageIncluded(self, baseImg, iconImg):
+    def checkImageIncluded(self, baseImg, iconImg, matchingValue=1.0):
         global logFile, logFileContents
         #baseImg = cv2.imread(baseImgPath, cv2.IMREAD_COLOR)
         #iconImg = cv2.imread(iconImagePath, cv2.IMREAD_COLOR)
@@ -348,8 +355,8 @@ class MatchingWorker:
         self.logFileContents.append("max = "+str(max)+"\n")
         print("update logFileContents,",logFileContents)
 
-        # TBD: for 데모 원래 기준 0.97
-        loc = np.where(res > 0.956)
+        # loc = np.where(res > matchingValue)
+        loc = np.where(res > 0.96)
         count = 0
         for i in zip(*loc[::-1]):
             count += 1
@@ -358,7 +365,74 @@ class MatchingWorker:
         else:
             return False
 
-    def doMatching(self, excelPath, platform, loadIconPath, captureFileName, excelVer, logFileCnt):
+    def checkColorPixcel(self, base, icon):
+        NG_case = []
+        height, width, _ = icon.shape
+        for _x in range(width):
+            for _y in range(height):
+                if abs(icon[_x][_y][0] - base[_x][_y][0]) > 15:
+                    NG_case.append(("color", _x, _y, icon[_x][_y], base[_x][_y]))
+                if abs(icon[_x][_y][1] - base[_x][_y][1]) > 15:
+                    NG_case.append(("color", _x, _y, icon[_x][_y], base[_x][_y]))
+                if abs(icon[_x][_y][2] - base[_x][_y][2]) > 15:
+                    NG_case.append(("color", _x, _y, icon[_x][_y], base[_x][_y]))
+
+        return NG_case
+
+    def matchingByPixcel(self, baseImg, iconImg, matchingValue=1.0):
+        global logFile, logFileContents
+        #baseImg = cv2.imread(baseImgPath, cv2.IMREAD_COLOR)
+        #iconImg = cv2.imread(iconImagePath, cv2.IMREAD_COLOR)
+
+        baseImgCopy = baseImg.copy()
+        #res = cv2.matchTemplate(baseImgCopy, iconImg, cv2.TM_CCOEFF_NORMED)
+        print("!!!!!!!!!!!!!!!!!! baseImgCopy size == ",baseImgCopy.shape)
+        print("!!!!!!!!!!!!!!!!!! iconImg size == ",iconImg.shape)
+        res = cv2.matchTemplate(baseImgCopy, iconImg, cv2.TM_CCOEFF_NORMED)
+        ### temp
+        max = np.max(res)
+        print("######################## max = ",max)
+        self.logFileContents.append("max = "+str(max)+"\n")
+        print("update logFileContents,",logFileContents)
+
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        top_left = max_loc
+        height, width, _ = iconImg.shape
+        bottom_right = (top_left[0]+width, top_left[1]+height)
+        baseImgCrop = baseImgCopy[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
+        # cv2.imshow('test',baseImgCrop)
+        # cv2.imshow('test2',iconImg)
+        # cv2.waitKey(0)
+        NG_pixcel = []
+        icon_gray = cv2.cvtColor(iconImg, cv2.COLOR_BGR2GRAY)
+        base_gray = cv2.cvtColor(baseImgCrop, cv2.COLOR_BGR2GRAY)
+        for idx_x in range(width):
+            for idx_y in range(height):
+                if (icon_gray[idx_y][idx_x] != base_gray[idx_y][idx_x]).all():
+                    NG_pixcel.append(("shape", idx_x, idx_y, icon_gray[idx_y][idx_x], base_gray[idx_y][idx_x]))
+
+        color_result = self.checkColorPixcel(baseImgCrop, iconImg)
+        NG_pixcel.extend(color_result)
+
+        if len(NG_pixcel) > 0:
+            print("there are NG pixcels!!!!!!!!!!!!!")
+            if not os.path.exists("matching_value.txt"):
+                file=open("matching_value.txt", "w")
+            else:
+                file=open("matching_value.txt", "a")
+            file.write("="*100+'\n')
+            for pix in NG_pixcel:
+                print(pix)
+                file.write(str(pix)+'\n')
+            file.write("="*100+'\n')
+            file.close()
+
+            return False
+        else:
+            return True
+
+
+    def doMatching(self, excelPath, platform, loadIconPath, captureFileName, excelVer, logFileCnt, matchingValue=1.0):
         if self.logFileContents == None:
             self.logFileContents = logFileCnt
         countryCode = captureFileName.split('(')[1].split(',')[0] # get Country code from captureFileName
@@ -387,7 +461,8 @@ class MatchingWorker:
                 print("iconImgs[index][0] == ",iconImgs[index][0])
                 self.logFileContents.append("iconImgs[index][0] == "+iconImgs[index][0]+"\n")
 
-                resCondition = self.checkImageIncluded(cpImgs[index], iconImgs[index][1])
+                resCondition = self.checkImageIncluded(cpImgs[index], iconImgs[index][1], matchingValue)
+                # resCondition = self.matchingByPixcel(cpImgs[index], iconImgs[index][1], matchingValue)
                 if resCondition == False:
                     # index도 0부터 시작
                     ngIcons.append([index, cpImgs[index], iconImgs[index]])

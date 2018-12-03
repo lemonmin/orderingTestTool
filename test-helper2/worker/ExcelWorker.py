@@ -61,7 +61,7 @@ class ExcelWorker:
                 #serverIconName = str(item[0])+'_'+str(detail[0])+'_Server.png'
                 #cv2.imwrite(capturedName, detail[1])
                 #cv2.imwrite(serverIconName, detail[2])
-                worksheet_ng.set_row(startRowCount-1, 170)
+                worksheet_ng.set_row(startRowCount-1, 185)
                 worksheet_ng.write('A'+str(startRowCount), str(item[0]), text_style)
                 worksheet_ng.write('B'+str(startRowCount), str(detail[0]+1), text_style)
                 worksheet_ng.insert_image('C'+str(startRowCount), captureDir, {'positioning': 1, 'x_offset': 10, 'y_offset': 10})

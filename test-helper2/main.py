@@ -21,6 +21,7 @@ KEY_IP = 'ip'
 KEY_RESOURCE_DIR = 'rscDir'
 KEY_EXCEL_DIR = 'excelDir'
 KEY_ZIP_DIR = 'zipDir'
+KEY_MATCHING_VALUE = 'matchingVal'
 
 class MyWindowClass(QtWidgets.QMainWindow):
     appendResultTextSignal = QtCore.pyqtSignal(str)
@@ -50,18 +51,22 @@ class MyWindowClass(QtWidgets.QMainWindow):
             self.platformCombo2ordering.addItems(PLATFROMS)
             self.divChipCombo.addItems(DIV_CHIP_VALUES)
             self.excelVerCombo.addItems(EXCEL_VERSION)
-            #TBD : file exist check!
+            if not os.path.exists('mydata.pickle'):
+                pickle_file = open('mydata.pickle', 'wb')
+                pickle_file.close()
             mydata = pickle.load(open('mydata.pickle', 'rb'))
             self.ipEdit.setText(mydata[KEY_IP])
             self.resourceDir.setText(mydata[KEY_RESOURCE_DIR])
             self.excelDir.setText(mydata[KEY_EXCEL_DIR])
             self.zipDir.setText(mydata[KEY_ZIP_DIR])
+            self.matchingValEdit.setText(mydata[KEY_MATCHING_VALUE])
 
             self.setPlatVer()
 
         except Exception as e:
             print('*** __initUI, Caught exception: %s: %s' % (e.__class__, e))
             self.ipEdit.setText('192.168.0.10')
+            self.matchingValEdit.setText('95')
 
     def setPlatVer(self):
         currentPlatVer = self.platformCombo2ordering.currentText().strip()
@@ -75,10 +80,11 @@ class MyWindowClass(QtWidgets.QMainWindow):
         rscDir = self.resourceDir.text().strip()
         excelDir = self.excelDir.text().strip()
         zipDir = self.zipDir.text().strip()
+        matchingVal = self.matchingValEdit.text().strip()
 
         try:
-            mydata = {KEY_IP:ip,
-                      KEY_RESOURCE_DIR:rscDir, KEY_EXCEL_DIR:excelDir, KEY_ZIP_DIR:zipDir}
+            mydata = {KEY_IP:ip, KEY_RESOURCE_DIR:rscDir, KEY_EXCEL_DIR:excelDir,
+                      KEY_ZIP_DIR:zipDir,KEY_MATCHING_VALUE:matchingVal}
             pickle.dump(mydata, open('mydata.pickle', 'wb'))
             self.appClosed = True
             # key release
@@ -293,30 +299,23 @@ class MyWindowClass(QtWidgets.QMainWindow):
                                 # 10칸 오른쪽 옆으로 감 (모든 CP Apps Capture를 위해)
                                 self.appWorker.inputKey(ip, KEY_RIGHT, 10)
 
-                            # TBD : For 데모. 삭제 필요.(if else 구문)
-                            if not os.path.exists('captured_' + str(i) + '.png'):
-                                resultCapture = self.captureWorker.doScreenCapture(ip, str(i))
-                                time.sleep(1.5)
-                                if resultCapture.resultType == RESULT_SUCCESS:
-                                    print("Capture Success!!")
-                                    result = self.matchingWorker.doMatching(excelPath, platform, resourcePath, str(i), excelVer, self.logFileContents)
-                                    if result == None:
-                                        failList.append(str(i))
-                                        continue
-                                    self.appendListViewSignal.emit(result)
-                                    time.sleep(1)
-                                else:
-                                    print("Capture Fail!!!!!!")
-                                    failList.append(str(i))
-                                    print("Fail List : ",failList)
-                                    continue
-                            else:
+
+
+                            resultCapture = self.captureWorker.doScreenCapture(ip, str(i))
+                            time.sleep(1.5)
+                            if resultCapture.resultType == RESULT_SUCCESS:
+                                print("Capture Success!!")
                                 result = self.matchingWorker.doMatching(excelPath, platform, resourcePath, str(i), excelVer, self.logFileContents)
                                 if result == None:
                                     failList.append(str(i))
                                     continue
                                 self.appendListViewSignal.emit(result)
                                 time.sleep(1)
+                            else:
+                                print("Capture Fail!!!!!!")
+                                failList.append(str(i))
+                                print("Fail List : ",failList)
+                                continue
 
                             # 열려 있는 Launcher를 닫는 용도
                             self.appWorker.inputKey(ip, KEY_EXIT, 1)
@@ -393,6 +392,8 @@ class MyWindowClass(QtWidgets.QMainWindow):
             self.matchingWorker.copyAllIcons(self.zipDir.text().strip(), self.resourceDir.text().strip())
 
             # temp
+            self.logFile = open('./test_log.txt','w')
+            self.logFile.close()
             self.logFile = open('./test_log.txt','r+')
             self.logFileContents = self.logFile.read().split('\n')
 
@@ -406,7 +407,15 @@ class MyWindowClass(QtWidgets.QMainWindow):
                 countiresFromCountryModel = self.countryWorker.countryModel.ARIBcountryList
 
             #### 현재 국가가 엑셀 내에 있을때만 list 넘김: TEST 필요!!!!
+            # testList_temp = []
             for c in countiresFromCountryModel:
+                # check = False
+                # for st in ['BHR', 'CHL', 'COL', 'EGY', 'FRA', 'IDN', 'JOR', 'ROU', 'URY']:
+                #     if st in c:
+                #         check = True
+                #         break
+                # if not check:
+                #     continue
                 # 국가 이름
                 #curCountry = c.split("(")[0].strip().lower()
                 # 국가 코드 2글자짜리
@@ -415,6 +424,8 @@ class MyWindowClass(QtWidgets.QMainWindow):
                     testList.append(c)
                 else:
                     notIncludedCountries.append(c)
+
+            # testList = [country for country in self.matchingWorker.countries if country in testList_temp]
 
             failList = self.orderingCheckLoop(countryModel, testList)
             if self.appClosed == True:
@@ -496,27 +507,32 @@ class MyWindowClass(QtWidgets.QMainWindow):
         try:
             ip = self.ipEdit.text().strip()
             platform = self.platformCombo2ordering.currentText()
+            startBtnStr = self.oderingTVCheckStartBtn.text().strip()
+            if startBtnStr == "Start":
+                self.oderingTVCheckStartBtn.setText("Stop")
+                # 실행 중 Main UI가 멈추기때문에 Thread로 구현
+                self.resultText.setText("")
+                self.listModel = QtGui.QStandardItemModel()
+                self.okListModel = QtGui.QStandardItemModel()
+                self.ngListModel = QtGui.QStandardItemModel()
+                self.okList = []
+                self.ngList = []
+                self.resultList.setModel(self.listModel)
 
-            # 실행 중 Main UI가 멈추기때문에 Thread로 구현
-            self.resultText.setText("")
-            self.listModel = QtGui.QStandardItemModel()
-            self.okListModel = QtGui.QStandardItemModel()
-            self.ngListModel = QtGui.QStandardItemModel()
-            self.okList = []
-            self.ngList = []
-            self.resultList.setModel(self.listModel)
+                # self.countryWorker.downloadCountryFile(ip)
+                # 국가 정보를 가져옴
 
-            # self.countryWorker.downloadCountryFile(ip)
-            # 국가 정보를 가져옴
-
-            result = self.countryWorker.inquery(ip, platform, DISPLAY_TYPE_NAME, False)
-            if result.resultType != RESULT_SUCCESS:
-                self.resultText.setText(result.message)
+                result = self.countryWorker.inquery(ip, platform, DISPLAY_TYPE_NAME, False)
+                if result.resultType != RESULT_SUCCESS:
+                    self.resultText.setText(result.message)
+                else:
+                    countryModel = self.countryWorker.countryModel
+                    self.countryWorker.devDVBorATSC()
+                    self.orderingTestThread = threading.Thread(target=self.orderingTestFunction)
+                    self.orderingTestThread.start()
             else:
-                countryModel = self.countryWorker.countryModel
-                self.countryWorker.devDVBorATSC()
-                self.orderingTestThread = threading.Thread(target=self.orderingTestFunction)
-                self.orderingTestThread.start()
+                self.oderingTVCheckStartBtn.setText("Start")
+                pass
 
         except Exception as e:
             print('*** orderingTVCheckStartBtnClicked Caught exception: %s: %s' % (e.__class__, e))

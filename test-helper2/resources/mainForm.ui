@@ -1048,7 +1048,7 @@ QTabBar::tab:!selected:hover
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>480</y>
+      <y>490</y>
       <width>71</width>
       <height>21</height>
      </rect>
@@ -1072,7 +1072,7 @@ QTabBar::tab:!selected:hover
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>510</y>
+      <y>520</y>
       <width>691</width>
       <height>161</height>
      </rect>
@@ -1087,16 +1087,47 @@ QTabBar::tab:!selected:hover
      <bool>true</bool>
     </property>
    </widget>
-   <zorder>label</zorder>
-   <zorder>label_3</zorder>
-   <zorder>helpButton</zorder>
-   <zorder>horizontalLayoutWidget_2</zorder>
-   <zorder>functionArea</zorder>
-   <zorder>label_15</zorder>
-   <zorder>resultText</zorder>
-   <zorder>ipEdit</zorder>
-   <zorder>label_2</zorder>
-   <zorder>label_2</zorder>
+   <widget class="QLineEdit" name="matchingValEdit">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>480</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>0</width>
+      <height>30</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="placeholderText">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_28">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>480</y>
+      <width>91</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Matching Value</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
