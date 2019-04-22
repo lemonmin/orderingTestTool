@@ -709,7 +709,7 @@ QTabBar::tab:!selected:hover
        </rect>
       </property>
       <property name="title">
-       <string>TV Check</string>
+       <string>******</string>
       </property>
       <widget class="QPushButton" name="oderingTVCheckStartBtn">
        <property name="enabled">
@@ -953,29 +953,6 @@ QTabBar::tab:!selected:hover
         </rect>
        </property>
       </widget>
-      <widget class="QComboBox" name="excelVerCombo">
-       <property name="geometry">
-        <rect>
-         <x>485</x>
-         <y>13</y>
-         <width>161</width>
-         <height>22</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_27">
-       <property name="geometry">
-        <rect>
-         <x>420</x>
-         <y>13</y>
-         <width>61</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Excel Ver.</string>
-       </property>
-      </widget>
       <widget class="QPushButton" name="remakeReportBtn">
        <property name="geometry">
         <rect>
@@ -1018,6 +995,51 @@ QTabBar::tab:!selected:hover
         <string>...</string>
        </property>
       </widget>
+      <widget class="QPushButton" name="remakeReportBtn_2">
+       <property name="geometry">
+        <rect>
+         <x>420</x>
+         <y>310</y>
+         <width>111</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Simple Test</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>288</x>
+         <y>20</y>
+         <width>361</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="label_29">
+          <property name="text">
+           <string>Load previous test</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="loadPrevious_btn"/>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_27">
+          <property name="text">
+           <string>Excel Ver.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="excelVerCombo"/>
+        </item>
+       </layout>
+      </widget>
       <zorder>layoutWidget</zorder>
       <zorder>oderingTVCheckStartBtn</zorder>
       <zorder>scrollArea</zorder>
@@ -1038,6 +1060,9 @@ QTabBar::tab:!selected:hover
       <zorder>remakeReportBtn</zorder>
       <zorder>zipDir</zorder>
       <zorder>zipRootSelecBtn</zorder>
+      <zorder>remakeReportBtn_2</zorder>
+      <zorder>loadPrevious_btn</zorder>
+      <zorder>label_29</zorder>
      </widget>
     </widget>
    </widget>
@@ -1166,8 +1191,8 @@ QTabBar::tab:!selected:hover
    <slot>remakeReportBtnClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>602</x>
-     <y>516</y>
+     <x>604</x>
+     <y>470</y>
     </hint>
     <hint type="destinationlabel">
      <x>609</x>
@@ -1182,8 +1207,8 @@ QTabBar::tab:!selected:hover
    <slot>zipRootSelecBtnClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>651</x>
-     <y>244</y>
+     <x>653</x>
+     <y>202</y>
     </hint>
     <hint type="destinationlabel">
      <x>717</x>
@@ -1198,8 +1223,8 @@ QTabBar::tab:!selected:hover
    <slot>platformChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>172</x>
-     <y>338</y>
+     <x>174</x>
+     <y>283</y>
     </hint>
     <hint type="destinationlabel">
      <x>109</x>
@@ -1214,8 +1239,8 @@ QTabBar::tab:!selected:hover
    <slot>resourceSelecBtnClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>646</x>
-     <y>282</y>
+     <x>648</x>
+     <y>227</y>
     </hint>
     <hint type="destinationlabel">
      <x>718</x>
@@ -1230,8 +1255,8 @@ QTabBar::tab:!selected:hover
    <slot>orderingTVCheckStartBtnClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>662</x>
-     <y>339</y>
+     <x>664</x>
+     <y>284</y>
     </hint>
     <hint type="destinationlabel">
      <x>192</x>
@@ -1246,8 +1271,8 @@ QTabBar::tab:!selected:hover
    <slot>excelSelecBtnClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>675</x>
-     <y>308</y>
+     <x>677</x>
+     <y>253</y>
     </hint>
     <hint type="destinationlabel">
      <x>720</x>
@@ -1262,8 +1287,8 @@ QTabBar::tab:!selected:hover
    <slot>loadResourceBtnClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>576</x>
-     <y>339</y>
+     <x>578</x>
+     <y>284</y>
     </hint>
     <hint type="destinationlabel">
      <x>390</x>
@@ -1278,12 +1303,28 @@ QTabBar::tab:!selected:hover
    <slot>changeOrderingFilter()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>635</x>
-     <y>364</y>
+     <x>637</x>
+     <y>309</y>
     </hint>
     <hint type="destinationlabel">
      <x>718</x>
      <y>356</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>remakeReportBtn_2</sender>
+   <signal>clicked()</signal>
+   <receiver>orderingTestArea</receiver>
+   <slot>simpleTestBtnClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>507</x>
+     <y>463</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>473</x>
+     <y>497</y>
     </hint>
    </hints>
   </connection>
@@ -1314,5 +1355,6 @@ QTabBar::tab:!selected:hover
   <slot>platformChanged()</slot>
   <slot>remakeReportBtnClicked()</slot>
   <slot>zipRootSelecBtnClicked()</slot>
+  <slot>simpleTestBtnClicked()</slot>
  </slots>
 </ui>

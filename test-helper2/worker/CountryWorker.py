@@ -246,6 +246,13 @@ class CountryWorker:
         print('changeCountryAndGroup : ' + countryName)
         result = TvModel()
         isConnected = self.tvController.connect(ip)
+        if not isConnected:
+            for i in range(7):
+                isConnected = self.tvController.connect(ip)
+                if isConnected:
+                    break
+                time.sleep(0.5)
+
         if isConnected:
             country = self.countryModel.getCountryByName(countryName)
             if country != None:
@@ -311,7 +318,6 @@ class CountryWorker:
                 try:
                     res = json.loads(result.resultValue)
                     countryListPath = res['path'].strip()
-                    print("countryListPath === ",countryListPath)
 
                     # cmd = 'cp '+str(countryListPath)+' /tmp/'
                     # print("cmd === ",cmd)
@@ -330,12 +336,10 @@ class CountryWorker:
                                 # time.sleep(0.3)
                                 # if os.exist('../resources/'+fileName):
                                 #     self.countryModel.countryFilePath = '../resources/'+fileName
-                                print("file Name == ",fileName)
                                 if os.path.exists('download/'+fileName):
                                     self.countryModel.countryFilePath = 'download/'+fileName
                                 else:
                                     print("error anything!!!")
-                                print("====== self.countryFilePath ===== ",self.countryModel.countryFilePath)
                             except Exception as e:
                                 print('*** Caught move exception: %s: %s' % (e.__class__, e))
                                 traceback.print_exc()

@@ -4,7 +4,7 @@ from common.TvController import *
 import common.LunaCommands as LunaCommands
 import traceback
 import time
-import cv2
+import cv2, os, time
 import numpy as np
 
 class CaptureWorker:
@@ -22,6 +22,22 @@ class CaptureWorker:
             if result.resultType == RESULT_SUCCESS:
                 result = TvModel()
                 result = self.tvController.downloadFile(fileName)
+            self.tvController.disconnect()
+
+        return result
+
+    def doScreenCapture_OSD(self, ip, fileName):
+        result = TvModel()
+        isConnected = self.tvController.connect(ip)
+        if isConnected:
+            # result = self.tvController.execCommand(LunaCommands.doScreenCapture(self, fileName))
+            os.system("/tmp/usb/sda/sda1/gmd")
+            time.sleep(0.5)
+            result = TvModel()
+            result = self.tvController.downloadFile("/var/log/*.png")
+            if result.resultValue == False:
+                os.system("cp /var/log/*.png /tmp/usb/sda/sda1/")
+                result.resultValue = True
             self.tvController.disconnect()
 
         return result

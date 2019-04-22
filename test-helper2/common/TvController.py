@@ -41,17 +41,15 @@ class TvController:
         checkTime = 0
         while True:
             if self.check and self.check == True:
-                print(" self.check is True!!!")
                 self.check = False
                 break
             if checkTime >= 50:
-                print("checkTime over 50!!!")
                 session.close()
                 self.execCommand(command)
                 break
             time.sleep(2)
             checkTime += 1
-            
+
     def execCommand(self, command):
         tvModel = TvModel()
         self.check = False
@@ -106,6 +104,39 @@ class TvController:
             tvModel.resultType = RESULT_FAIL
 
         return tvModel
+
+    def execNormalCommand(self, command, timeout=0):
+        tvModel = TvModel()
+        print(command)
+        try:
+            session = self.tvTransport.open_session()
+            session.exec_command(command + '\n')
+            if timeout == 0:
+                session.recv_exit_status()
+                cur_timeout = 0
+                byteText = session.recv(8000)
+                message = byteText.decode(encoding='UTF-8')
+            else:
+                cur_time = 0
+                while True:
+                    if session.exit_status_ready():
+                        break
+                    time.sleep(1)
+                    cur_time += 1
+                    if cur_time > timeout:
+                        break
+                    while session.recv_ready():
+                        byteText = session.recv(8000)
+                        print(byteText.decode(encoding='UTF-8'))
+                # print(session.recv(1024))
+                message = byteText.decode(encoding='UTF-8')
+
+        except Exception as e:
+            print('*** Caught exception: %s: %s' % (e.__class__, e))
+            traceback.print_exc()
+            message = str(e)
+
+        return message
 
     def downloadFile(self, fileName):
         print('start to downloadFile : ' + fileName)

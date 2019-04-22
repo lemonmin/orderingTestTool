@@ -36,7 +36,7 @@ MESSAGE_TV_ABNORMAL = 'TV 연결을 실패하였습니다. TV IP 또는 TV가 �
     + '8. Shell mode 진입 후 ‘nc atsagent.lge.com 9001 | /bin/bash &’  입력\n' \
     + '\n* 파일다운로드를 위해 TV 에 SCP 설치 방법 *\n' \
     + '1. Putty 에서 SSH로 TV 연결 (id : root)\n' \
-    + '2. ‘root@LGwebOSTV : ~#’ 에서 wget xownsla1.dothome.co.kr/scp.sh 입력 \n' \
+    + '2. ‘root@LGwebOSTV : ~#’ 에서 wget https://swdqa.github.io/scp.sh 입력 \n' \
     + '3. ‘root@LGwebOSTV : ~#’ 에서 sh scp.sh 입력\n' \
     + '4. Password 요구 시 무시하고 Enter 키 3번 입력\n'
 
@@ -80,6 +80,7 @@ PLATFROM_WEBOS45 = 'webOS4.5'
 
 COUNTRY_CODES_FILE_WEBOS3 = '../resources/country_codes_v5_webOS3.xml'
 COUNTRY_CODES_FILE_WEBOS35 = '../resources/country_codes_v5_webOS35.xml'
+COUNTRY_CODES_FILE_WEBOS45 = '../resources/country_codes_v5_webOS45.xml'
 
 PLATFROMS = [PLATFROM_WEBOS35, PLATFROM_WEBOS3, PLATFROM_WEBOS45]
 PLATFROMS_FILE = {PLATFROM_WEBOS3:COUNTRY_CODES_FILE_WEBOS3, PLATFROM_WEBOS35:COUNTRY_CODES_FILE_WEBOS35, PLATFROM_WEBOS45:COUNTRY_CODES_FILE_WEBOS35}

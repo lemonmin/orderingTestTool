@@ -74,8 +74,6 @@ class MatchingWorker:
         gap = int(self.sizeInfo['gap']*FX_FY)
         y_margin = int(self.sizeInfo['y_margin']*FX_FY)
         startX = int(self.sizeInfo['startX']*FX_FY)
-        print("!!!!!!!!!!!!!!!! self.sizeInfo == ",width, gap, y_margin, startX)
-        print("!!!!!!!!!!!!!!img size!!!!!! == ",img.shape)
         resultImg = []
         index = 0
         while startX <= img.shape[1]:
@@ -108,9 +106,7 @@ class MatchingWorker:
     def loadAllCountriesInCurrentPlatformForWO35(self, excelFolderPath, platform):
         files = os.listdir(excelFolderPath)
         for f in files:
-            print(">>>>>>>>>>>>>>>> f : ",f," >>>>> platform : ",platform)
             if platform in f:
-                print("if platform in f:")
                 try:
                     excelPath = Path(Path(excelFolderPath) / Path(f))
                     workbook = xlrd.open_workbook(excelPath)
@@ -286,7 +282,7 @@ class MatchingWorker:
                                 index += 1
                                 includeCheck = True
                             else:
-                                print("!!!!!!!!!!!!!!!!! Can't find icon.png !!!!!!!!!!!!!!!!!!!!!!")
+                                print("!!!!!!!!!!!!!!!!! Can't find mediumLargeIcon.png !!!!!!!!!!!!!!!!!!!!!!")
                                 filePathNames = os.listdir(filePath)
                                 check = False
                                 for f in filePathNames:
@@ -346,17 +342,13 @@ class MatchingWorker:
 
         baseImgCopy = baseImg.copy()
         #res = cv2.matchTemplate(baseImgCopy, iconImg, cv2.TM_CCOEFF_NORMED)
-        print("!!!!!!!!!!!!!!!!!! baseImgCopy size == ",baseImgCopy.shape)
-        print("!!!!!!!!!!!!!!!!!! iconImg size == ",iconImg.shape)
         res = cv2.matchTemplate(baseImgCopy, iconImg, cv2.TM_CCOEFF_NORMED)
         ### temp
         max = np.max(res)
         print("######################## max = ",max)
         self.logFileContents.append("max = "+str(max)+"\n")
-        print("update logFileContents,",logFileContents)
 
-        # loc = np.where(res > matchingValue)
-        loc = np.where(res > 0.96)
+        loc = np.where(res > matchingValue)
         count = 0
         for i in zip(*loc[::-1]):
             count += 1
@@ -415,7 +407,6 @@ class MatchingWorker:
         NG_pixcel.extend(color_result)
 
         if len(NG_pixcel) > 0:
-            print("there are NG pixcels!!!!!!!!!!!!!")
             if not os.path.exists("matching_value.txt"):
                 file=open("matching_value.txt", "w")
             else:
@@ -432,13 +423,14 @@ class MatchingWorker:
             return True
 
 
-    def doMatching(self, excelPath, platform, loadIconPath, captureFileName, excelVer, logFileCnt, matchingValue=1.0):
+    def doMatching(self, excelPath, platform, loadIconPath, captureFileName, excelVer, logFileCnt, matchingValue=100.0):
         if self.logFileContents == None:
             self.logFileContents = logFileCnt
         countryCode = captureFileName.split('(')[1].split(',')[0] # get Country code from captureFileName
         countryName = captureFileName.strip('.png').strip()
         strAppIds = self.parsingOrderingExcel(excelPath, platform, countryCode, excelVer)
         ngIcons = []
+        #################### TBD : 여기서 일단 현재 국가의 오더링을 소스로 비교
         if strAppIds != None:
             # iconImage = (iconPath, img)
             iconImgs = self.readIcons(loadIconPath, strAppIds) # 0부터 시작
@@ -447,22 +439,9 @@ class MatchingWorker:
 
             for index in range(len(iconImgs)):
                 resCondition = False
-                # pyramid = self.getImgPyramid(iconImgs[index][1])
-                """
-                pyramid = self.getImgPyramid(cpImgs[index])
-                # for target in pyramid:
-                for cp in pyramid:
-                    # if self.checkImageIncluded(cpImgs[index], target):
-                    if self.checkImageIncluded(cp, iconImgs[index][1]):
-                        resCondition = True
-                        break
-                """
-                # temp
-                print("iconImgs[index][0] == ",iconImgs[index][0])
                 self.logFileContents.append("iconImgs[index][0] == "+iconImgs[index][0]+"\n")
 
-                resCondition = self.checkImageIncluded(cpImgs[index], iconImgs[index][1], matchingValue)
-                # resCondition = self.matchingByPixcel(cpImgs[index], iconImgs[index][1], matchingValue)
+                resCondition = self.checkImageIncluded(cpImgs[index], iconImgs[index][1], matchingValue/100)
                 if resCondition == False:
                     # index도 0부터 시작
                     ngIcons.append([index, cpImgs[index], iconImgs[index]])

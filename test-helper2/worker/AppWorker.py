@@ -63,6 +63,17 @@ class AppWorker:
                     return True
             return False
 
+    def getAppListFromTV(self, ip, path):
+        # execNormalCommand
+        result = TvModel()
+        isConnected = self.tvController.connect(ip)
+        if isConnected:
+            result = self.tvController.execNormalCommand("cat "+path)
+            self.tvController.disconnect()
+            return result
+        else:
+            return False
+
     def __loadCurrentState(self, currentState):
         currentStateDict = json.loads(currentState)
         return currentStateDict[CURRENT_STATE]

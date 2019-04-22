@@ -6,6 +6,7 @@ import sys
 import re
 import pickle
 import os
+import json
 from worker.CountryWorker import *
 from worker.AppWorker import *
 from worker.CaptureWorker import *
@@ -31,6 +32,7 @@ class MyWindowClass(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self, parent)
         mainUI = os.path.join('.', 'resources', 'mainForm.ui')
         self.appClosed = False
+        self.getStopSignal = False
         self.form_class = uic.loadUi(mainUI, self)## Widget으로 구성된 ui일 경우 index 참조 없이 loadui를 호출하면 된다.
         self.form_class.show()
         self.countryWorker = CountryWorker()
@@ -51,6 +53,7 @@ class MyWindowClass(QtWidgets.QMainWindow):
             self.platformCombo2ordering.addItems(PLATFROMS)
             self.divChipCombo.addItems(DIV_CHIP_VALUES)
             self.excelVerCombo.addItems(EXCEL_VERSION)
+            self.loadPrevious_btn.addItems(['On', 'Off'])
             if not os.path.exists('mydata.pickle'):
                 pickle_file = open('mydata.pickle', 'wb')
                 pickle_file.close()
@@ -60,6 +63,7 @@ class MyWindowClass(QtWidgets.QMainWindow):
             self.excelDir.setText(mydata[KEY_EXCEL_DIR])
             self.zipDir.setText(mydata[KEY_ZIP_DIR])
             self.matchingValEdit.setText(mydata[KEY_MATCHING_VALUE])
+            self.targetCountries = ['BIH', 'DEU', 'FRA', 'HRV', 'HUN', 'MKD', 'MNE', 'SRB', 'SVN']
 
             self.setPlatVer()
 
@@ -85,8 +89,21 @@ class MyWindowClass(QtWidgets.QMainWindow):
         try:
             mydata = {KEY_IP:ip, KEY_RESOURCE_DIR:rscDir, KEY_EXCEL_DIR:excelDir,
                       KEY_ZIP_DIR:zipDir,KEY_MATCHING_VALUE:matchingVal}
-            pickle.dump(mydata, open('mydata.pickle', 'wb'))
+            with open('mydata.pickle', 'wb') as f:
+                pickle.dump(mydata, f)
+
             self.appClosed = True
+            self.getStopSignal = True
+
+            if hasattr(self,"needToCheckList"):
+                stop_data_w = {'ok_list':self.okList,'ng_list':self.ngList, 'dvb_country_list':self.countryWorker.countryModel.DVBcountryList,
+                          'atsc_country_list':self.countryWorker.countryModel.ATSCcountryList, 'arib_country_list':self.countryWorker.countryModel.ARIBcountryList,
+                          'need_to_check_country_list':self.needToCheckList}
+                with open('stop_data.pickle', 'wb') as f:
+                    pickle.dump(stop_data_w, f)
+                ####### TBD : report 만들고 끝내기.
+
+
             # key release
             # self.powerWorker.keyBlock(ip, False)
             QtWidgets.QMainWindow.closeEvent(self, event)
@@ -190,8 +207,6 @@ class MyWindowClass(QtWidgets.QMainWindow):
         # TBD : 그리고 selected Win의 close event에 trigger 걸어서 처리 완료 후에 Main Win 다시 enable 하기.
         currentText = self.resultList.selectedIndexes()[0].data().strip()
         modiText = str(currentText.split(":")[0].strip()) + ":" + str(selectedResult)
-        print("selectedResult = ",selectedResult)
-        print("currentText = ",currentText)
         items = self.listModel.findItems(currentText)
 
         if len(items) > 1:
@@ -249,9 +264,11 @@ class MyWindowClass(QtWidgets.QMainWindow):
             ngList = [] # check 후 NG인 애들 report용
 
             for count,i in enumerate(testList):
-                if self.appClosed == True:
-                    print("received closeEvent.")
-                    break
+
+                if self.getStopSignal or self.appClosed:
+                    print("########################################### get Stop Signal!!! or appClosed!!")
+                    return self.needToCheckList if len(self.needToCheckList) > 0 else testList[count:]+failList
+
                 self.setResultTextSignal.emit("** The number of country to test : "+str(count+1)+"/"+str(len(testList)))
                 if not Utils.isEmpty(self, ip, str(i)):
                     # i번째 국가로 변경 요청
@@ -269,7 +286,6 @@ class MyWindowClass(QtWidgets.QMainWindow):
                         self.powerWorker.setEULA(ip)
                         time.sleep(0.5)
                         # 현재 국가 이름이 요청 국가 이름과 같을 경우
-                        print(countryModel.currentCountry, str(i))
                         if countryModel.currentCountry == str(i):
                             # EXIT Key 4회 누르기. (Popup 등을 죽이기 위함)
                             # 4회인 이유는 혹시 연달아서 뜨는 것들이 있을까봐
@@ -302,20 +318,37 @@ class MyWindowClass(QtWidgets.QMainWindow):
 
 
                             resultCapture = self.captureWorker.doScreenCapture(ip, str(i))
+                            # resultCapture = self.captureWorker.doScreenCapture_OSD(ip, str(i))
                             time.sleep(1.5)
                             if resultCapture.resultType == RESULT_SUCCESS:
                                 print("Capture Success!!")
-                                result = self.matchingWorker.doMatching(excelPath, platform, resourcePath, str(i), excelVer, self.logFileContents)
+                                result = self.matchingWorker.doMatching(excelPath, platform, resourcePath, str(i), excelVer, self.logFileContents, int(self.matchingValEdit.text().strip()))
                                 if result == None:
                                     failList.append(str(i))
                                     continue
+                                self.needToCheckList = testList[count:] + failList
+                                self.needToCheckList = list(set(self.needToCheckList))
                                 self.appendListViewSignal.emit(result)
                                 time.sleep(1)
                             else:
                                 print("Capture Fail!!!!!!")
-                                failList.append(str(i))
-                                print("Fail List : ",failList)
-                                continue
+                                for i in range(3):
+                                    resultCapture = self.captureWorker.doScreenCapture(ip, str(i))
+                                    time.sleep(1.5)
+                                    if resultCapture:
+                                        break
+                                if resultCapture:
+                                    print("Capture Success!!")
+                                    result = self.matchingWorker.doMatching(excelPath, platform, resourcePath, str(i), excelVer, self.logFileContents, int(self.matchingValEdit.text().strip()))
+                                    if result == None:
+                                        failList.append(str(i))
+                                        continue
+                                    self.appendListViewSignal.emit(result)
+                                    time.sleep(1)
+                                else:
+                                    failList.append(str(i))
+                                    print("Fail List : ",failList)
+                                    continue
 
                             # 열려 있는 Launcher를 닫는 용도
                             self.appWorker.inputKey(ip, KEY_EXIT, 1)
@@ -333,6 +366,10 @@ class MyWindowClass(QtWidgets.QMainWindow):
                         continue
                 else:
                     self.resultText.setText(MESSAGE_NO_INPUT_CHANGE_COUNTRY)
+
+                if self.getStopSignal or self.appClosed:
+                    print("########################################### get Stop Signal!!! or appClosed!!")
+                    return failList + testList[count:]
             print("END!!!! Fail List :", failList)
 
             # key release
@@ -407,44 +444,60 @@ class MyWindowClass(QtWidgets.QMainWindow):
                 countiresFromCountryModel = self.countryWorker.countryModel.ARIBcountryList
 
             #### 현재 국가가 엑셀 내에 있을때만 list 넘김: TEST 필요!!!!
-            # testList_temp = []
-            for c in countiresFromCountryModel:
-                # check = False
-                # for st in ['BHR', 'CHL', 'COL', 'EGY', 'FRA', 'IDN', 'JOR', 'ROU', 'URY']:
-                #     if st in c:
-                #         check = True
-                #         break
-                # if not check:
-                #     continue
-                # 국가 이름
-                #curCountry = c.split("(")[0].strip().lower()
-                # 국가 코드 2글자짜리
-                curCountry = c.split("(")[1].split(",")[0].strip()
-                if curCountry in self.matchingWorker.countries:
-                    testList.append(c)
-                else:
-                    notIncludedCountries.append(c)
+            if not hasattr(self,'needToCheckList') or len(self.needToCheckList) == 0 or len(self.needToCheckList) < 1:
+                for c in countiresFromCountryModel:
+                    ''''
+                    check = False
+                    for st in self.targetCountries:
+                        if st in c:
+                            check = True
+                            break
+                    if not check:
+                        continue
+                    '''
+                    # 국가 이름
+                    #curCountry = c.split("(")[0].strip().lower()
+                    # 국가 코드 2글자짜리
+                    curCountry = c.split("(")[1].split(",")[0].strip()
+                    if curCountry in self.matchingWorker.countries:
+                        testList.append(c)
+                    else:
+                        notIncludedCountries.append(c)
+                if len(testList) > 0:
+                    self.needToCheckList = testList
+            else:
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! @@@ there is self.needToCheckList")
+                if len(self.needToCheckList) > 0:
+                    testList = self.needToCheckList
 
             # testList = [country for country in self.matchingWorker.countries if country in testList_temp]
 
             failList = self.orderingCheckLoop(countryModel, testList)
+            if self.getStopSignal or self.appClosed:
+                print("get Stop Signal!!!!!!!!!!")
+                self.needToCheckList = failList
+                return
+
             if self.appClosed == True:
                 print("app Closed.")
                 return
 
             # 확인에 실패한 국가 list를 최대 100회까지 모두 다 확인하기 위한 while문
-            while len(failList) != 0 and tryCount < 20:
+            while failList != None and len(failList) != 0 and tryCount < 20:
                 failList = self.orderingCheckLoop(countryModel, failList)
                 tryCount += 1
                 print("******* Try Count : ", tryCount)
             # TBD : 모든 확인 이후 처리구문
             self.logFile.write(''.join(self.logFileContents))
             self.logFile.close()
-            print("write logFileContents = ",logFileContents)
             if len(failList)>0:
                 self.appendResultTextSignal.emit("Test Finished! Some list was not tested : "+str(failList))
             else:
                 self.appendResultTextSignal.emit("Test Finished!!! Total count : "+str(self.listModel.rowCount())+"/"+str(len(testList)))
+                if os.path.exists("stop_data.pickle"):
+                    os.remove("stop_data.pickle")
+                if hasattr(self,"needToCheckList"):
+                    del(self.needToCheckList)
 
             # temp
 
@@ -510,29 +563,76 @@ class MyWindowClass(QtWidgets.QMainWindow):
             startBtnStr = self.oderingTVCheckStartBtn.text().strip()
             if startBtnStr == "Start":
                 self.oderingTVCheckStartBtn.setText("Stop")
-                # 실행 중 Main UI가 멈추기때문에 Thread로 구현
-                self.resultText.setText("")
-                self.listModel = QtGui.QStandardItemModel()
-                self.okListModel = QtGui.QStandardItemModel()
-                self.ngListModel = QtGui.QStandardItemModel()
-                self.okList = []
-                self.ngList = []
-                self.resultList.setModel(self.listModel)
-
-                # self.countryWorker.downloadCountryFile(ip)
-                # 국가 정보를 가져옴
-
-                result = self.countryWorker.inquery(ip, platform, DISPLAY_TYPE_NAME, False)
-                if result.resultType != RESULT_SUCCESS:
-                    self.resultText.setText(result.message)
-                else:
-                    countryModel = self.countryWorker.countryModel
-                    self.countryWorker.devDVBorATSC()
+                self.getStopSignal = False
+                # TBD : need to add to get all info from pickle (if it exist)
+                if hasattr(self,"needToCheckList"):
+                    if not hasattr(self.countryWorker, "countryModel") or not hasattr(self.countryWorker.countryModel, "countryList"):
+                        result = self.countryWorker.inquery(ip, platform, DISPLAY_TYPE_NAME, False)
+                        if result.resultType != RESULT_SUCCESS:
+                            self.resultText.setText(result.message)
+                        else:
+                            self.countryWorker.devDVBorATSC()
                     self.orderingTestThread = threading.Thread(target=self.orderingTestFunction)
                     self.orderingTestThread.start()
+                else:
+                    if not os.path.exists("stop_data.pickle") or self.loadPrevious_btn.currentText().strip() == 'Off':
+                        # 실행 중 Main UI가 멈추기때문에 Thread로 구현
+                        self.resultText.setText("")
+                        self.listModel = QtGui.QStandardItemModel()
+                        self.okListModel = QtGui.QStandardItemModel()
+                        self.ngListModel = QtGui.QStandardItemModel()
+                        self.okList = []
+                        self.ngList = []
+                        self.resultList.setModel(self.listModel)
+
+                        # self.countryWorker.downloadCountryFile(ip)
+                        # 국가 정보를 가져옴
+
+                        result = self.countryWorker.inquery(ip, platform, DISPLAY_TYPE_NAME, False)
+                        if result.resultType != RESULT_SUCCESS:
+                            self.resultText.setText(result.message)
+                        else:
+                            self.countryWorker.devDVBorATSC()
+                            self.orderingTestThread = threading.Thread(target=self.orderingTestFunction)
+                            self.orderingTestThread.start()
+                    else:
+                        if os.path.exists('stop_data.pickle') and not (hasattr(self, 'okList') and
+                            hasattr(self, 'ngList')):
+                            ###### TBD : 기존 Setting이랑 동일할 때만 가져오기 / 선택지 만들기
+                            with open('stop_data.pickle', 'rb') as f:
+                                stopData = pickle.load(f)
+                            self.resultText.setText("")
+                            self.listModel = QtGui.QStandardItemModel()
+                            self.okListModel = QtGui.QStandardItemModel()
+                            self.ngListModel = QtGui.QStandardItemModel()
+                            self.okList = stopData['ok_list']
+                            self.ngList = stopData['ng_list']
+                            self.resultList.setModel(self.listModel)
+
+                            result = self.countryWorker.inquery(ip, platform, DISPLAY_TYPE_NAME, False)
+                            if result.resultType != RESULT_SUCCESS:
+                                self.resultText.setText(result.message)
+                                self.oderingTVCheckStartBtn.setText("Start")
+                            else:
+                                self.countryWorker.devDVBorATSC()
+
+                            self.countryWorker.countryModel.DVBcountryList = stopData['dvb_country_list']
+                            self.countryWorker.countryModel.ATSCcountryList = stopData['atsc_country_list']
+                            self.countryWorker.countryModel.ARIBcountryList = stopData['arib_country_list']
+                            if not hasattr(self, "needToCheckList"):
+                                self.needToCheckList = stopData['need_to_check_country_list']
+
+
+                            self.orderingTestThread = threading.Thread(target=self.orderingTestFunction)
+                            self.orderingTestThread.start()
+                        else:
+                            self.orderingTestThread = threading.Thread(target=self.orderingTestFunction)
+                            self.orderingTestThread.start()
+
             else:
                 self.oderingTVCheckStartBtn.setText("Start")
-                pass
+                self.getStopSignal = True
+                # self.needToCheckList
 
         except Exception as e:
             print('*** orderingTVCheckStartBtnClicked Caught exception: %s: %s' % (e.__class__, e))
@@ -615,6 +715,79 @@ class MyWindowClass(QtWidgets.QMainWindow):
     def nextBtnClicked(self):
         print("nextBtnClicked()")
         # TBD : 이후 List 결과로 화면 전환하는거 구현하기
+
+    def simpleTestBtnClicked(self):
+        orderingPath = "/usr/palm/customization/launchpoints"
+        stubPath = "/mnt/otncabi/usr/palm/applications"
+        currentExcelVer = self.excelVerCombo.currentText().strip()
+        ip = self.ipEdit.text().strip()
+        testList = []
+        notIncludedCountries = []
+        failList = [] # 국가 변경이나 capture 실패한 것들 재실행을 위한 List
+        ngList = [] # check 후 NG인 애들 report용
+        currentChip = self.divChipCombo.currentText().strip()
+        platform = self.platformSelectCombo.currentText().strip()
+
+        excelVer = self.excelVerCombo.currentText().strip()
+        excelPath = self.excelDir.text().strip()
+        resourcePath = self.resourceDir.text().strip()
+        currentPlatVer = self.platformCombo2ordering.currentText().strip()
+
+        platform_version = self.platformCombo2ordering.currentText()
+        result = self.countryWorker.inquery(ip, platform_version, DISPLAY_TYPE_NAME, False)
+        if result.resultType != RESULT_SUCCESS:
+            self.resultText.setText(result.message)
+        else:
+            self.countryWorker.devDVBorATSC()
+
+        countryModel = self.countryWorker.countryModel
+
+        countiresFromCountryModel = []
+        if currentChip == DIV_CHIP_VALUES[0]: #DVB
+            countiresFromCountryModel = self.countryWorker.countryModel.DVBcountryList
+        elif currentChip == DIV_CHIP_VALUES[1]: #ATSC
+            countiresFromCountryModel = self.countryWorker.countryModel.ATSCcountryList
+        else:
+            countiresFromCountryModel = self.countryWorker.countryModel.ARIBcountryList
+
+        for c in countiresFromCountryModel:
+            curCountry = c.split("(")[1].split(",")[0].strip()
+            if curCountry in self.matchingWorker.countries:
+                testList.append(c)
+            else:
+                notIncludedCountries.append(c)
+
+        for idx,country in enumerate(testList):
+            if not Utils.isEmpty(self, ip, str(country)):
+                countryCode = str(country).split(",")[0].split("(")[-1].strip()
+                excelOrdering = self.matchingWorker.parsingOrderingExcel(excelPath, platform, countryCode, excelVer)
+                code3 = str(country).split(",")[1].strip()
+                applistPath = orderingPath + '/' + code3 + '/applist.json'
+                result = self.appWorker.getAppListFromTV(ip, applistPath)
+                if not result or str(result).strip() == '' or type(result) != type("str"):
+                    failList.append((country,"cannot open applist."))
+                else:
+                    applist = json.loads(str(result))
+                    ordering = applist["applications_dosci"]
+                    if len(ordering) != len(excelOrdering.keys()):
+                        print("ordering list length is different!!!")
+                        failList.append((country,"not matching! tv ordering = "+str(ordering)+" / excel ordering = "+str(excelOrdering)))
+                        continue
+                    for idx, tv_order in enumerate(ordering):
+                        if excelOrdering[idx+1].strip() != tv_order.strip():
+                            failList.append((country,"not matching! tv ordering = "+str(ordering)+" / excel ordering = "+str(excelOrdering)))
+                            break
+        print("failList========\n",failList)
+        resultText = ""
+        for item in failList:
+            for line in item:
+                if '/' in line:
+                    line = line.split('/')
+                    line = '\n'.join(line)
+                resultText += str(line) + '\n'
+            resultText += '\n'
+        self.setResultTextSignal.emit("** failList : \n"+resultText)
+
 
     def showDialog(self, msgType, message):
         # print(message)
